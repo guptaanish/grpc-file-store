@@ -1,3 +1,8 @@
+---
+name: documentation
+description: Verify that all documentation matches the current codebase state and fix any discrepancies.
+---
+
 # Documentation Sync
 
 Verify that all documentation matches the current codebase state and fix any discrepancies.

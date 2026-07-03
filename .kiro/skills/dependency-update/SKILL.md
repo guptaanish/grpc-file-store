@@ -1,3 +1,8 @@
+---
+name: dependency-update
+description: Procedure for safely updating a project dependency.
+---
+
 # Dependency Update
 
 Procedure for safely updating a project dependency.

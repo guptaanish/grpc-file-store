@@ -1,3 +1,8 @@
+---
+name: refactor
+description: Safely rename, move, or restructure code without breaking references or documentation.
+---
+
 # Refactor
 
 Safely rename, move, or restructure code without breaking references or documentation.

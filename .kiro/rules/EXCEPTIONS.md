@@ -1,4 +1,4 @@
-# Exception Handling & Null Safety Rules
+# Exception Handling Rules
 
 ## Exception Design
 
@@ -19,10 +19,3 @@
 
 - **Try-With-Resources** — Always use try-with-resources for `AutoCloseable` resources (files, streams, connections).
 - **No Manual Close** — Avoid manual `finally` blocks for resource cleanup when try-with-resources is available.
-
-## Null Safety
-
-- **Avoid Null Returns** — Return `Optional<T>`, empty collections, or use `@Nullable`/`@NonNull` annotations.
-- **Optional Usage** — Use `Optional` for return types where absence is expected; avoid `Optional` as method parameters or fields.
-- **Null Checks** — Use `Objects.requireNonNull()` for parameter validation in constructors and public methods.
-- **Collections** — Return empty collections (`List.of()`, `Collections.emptyList()`) instead of `null`.

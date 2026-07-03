@@ -1,3 +1,8 @@
+---
+name: new-feature
+description: End-to-end workflow for implementing a new feature across backend, documentation, and tests.
+---
+
 # New Feature
 
 End-to-end workflow for implementing a new feature.

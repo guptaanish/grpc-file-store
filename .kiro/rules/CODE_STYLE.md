@@ -7,6 +7,15 @@
 - Use **Lombok** annotations (`@Getter`, `@Setter`, `@RequiredArgsConstructor`, `@Slf4j`, etc.) where appropriate to minimize boilerplate.
 - Avoid "Lombok-everything"; use `@Getter` and `@Setter` only where necessary.
 
+## Formatting & Spacing
+
+- **All class-level member variables** must have:
+  - **Javadoc comments** describing their purpose (use multi-line format) — not required for test class variables with self-explanatory names.
+  - One **blank line** after each variable declaration to visually separate fields.
+- **All methods** must have:
+  - **Javadoc comments** describing their purpose, parameters, return values, and exceptions (not required for test methods with descriptive names).
+  - One **blank line** after each method to visually separate methods.
+
 ## Development Workflow Checklist
 
 - Use `final` for local variables that don't change to aid JVM optimization.

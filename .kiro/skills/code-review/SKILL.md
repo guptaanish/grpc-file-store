@@ -1,3 +1,8 @@
+---
+name: code-review
+description: Review a pull request or code change for correctness, security, performance, and style.
+---
+
 # Code Review
 
 Review a pull request or code change for correctness, security, performance, and style.

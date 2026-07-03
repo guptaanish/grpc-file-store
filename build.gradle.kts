@@ -3,16 +3,16 @@ import com.google.protobuf.gradle.*
 plugins {
     java
     jacoco
-    id("org.springframework.boot") version "3.4.1"
+    id("org.springframework.boot") version "3.5.16"
     id("io.spring.dependency-management") version "1.1.7"
-    id("com.google.protobuf") version "0.9.4"
-    id("com.diffplug.spotless") version "7.0.4"
+    id("com.google.protobuf") version "0.9.6"
+    id("com.diffplug.spotless") version "8.4.0"
 }
 
 group = "com.example"
 version = "0.0.1-SNAPSHOT"
 
-val grpcVersion = "1.68.2"
+val grpcVersion = "1.78.0"
 
 java {
     toolchain {
@@ -37,7 +37,7 @@ repositories {
     mavenCentral()
 }
 
-val protocVersion = "4.29.2"
+val protocVersion = "4.35.1"
 val grpcSpringBootVersion = "3.1.0.RELEASE"
 val mapstructVersion = "1.6.3"
 val logstashEncoderVersion = "8.0"
@@ -61,7 +61,6 @@ dependencies {
 
     // Jakarta annotation (for generated gRPC code)
     implementation("jakarta.annotation:jakarta.annotation-api")
-    implementation("javax.annotation:javax.annotation-api:1.3.2")
 
     // Database
     runtimeOnly("com.h2database:h2")
@@ -88,7 +87,7 @@ dependencies {
     testImplementation("org.junit.platform:junit-platform-launcher")
 
     // JaCoCo runtime API for per-test coverage mapping
-    testImplementation("org.jacoco:org.jacoco.core:0.8.12")
+    testImplementation("org.jacoco:org.jacoco.core:0.8.15")
 }
 
 protobuf {
