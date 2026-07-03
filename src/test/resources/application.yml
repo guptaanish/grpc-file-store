@@ -1,0 +1,35 @@
+filestore:
+  chunk-size-bytes: 65536
+  max-file-size-bytes: 104857600
+  storage:
+    type: LOCAL
+    local:
+      directory: ${java.io.tmpdir}/grpc-file-store-test
+  quota:
+    enabled: false
+    max-total-bytes: 1073741824
+  ttl:
+    enabled: false
+    retention-days: 30
+
+grpc:
+  server:
+    port: 0
+    in-process-name: test
+    health-service-enabled: false
+  client:
+    inProcess:
+      address: in-process:test
+      negotiation-type: PLAINTEXT
+
+spring:
+  threads:
+    virtual:
+      enabled: true
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false

@@ -1,0 +1,222 @@
+syntax = "proto3";
+
+package filestore.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option java_multiple_files = true;
+option java_package = "com.example.filestore.grpc";
+
+// File store service providing upload, download, list, delete, and versioning RPCs.
+service FileStoreService {
+
+  // Upload a file using client-streaming.
+  rpc UploadFile (stream UploadFileRequest) returns (UploadFileResponse);
+
+  // Download a file using server-streaming.
+  rpc DownloadFile (DownloadFileRequest) returns (stream DownloadFileResponse);
+
+  // List / search files (unary).
+  rpc ListFiles (ListFilesRequest) returns (ListFilesResponse);
+
+  // Get file metadata (unary).
+  rpc GetFileMetadata (GetFileMetadataRequest) returns (FileMetadata);
+
+  // Delete a file (unary).
+  rpc DeleteFile (DeleteFileRequest) returns (DeleteFileResponse);
+
+  // Get file version history (unary).
+  rpc GetFileVersions (GetFileVersionsRequest) returns (GetFileVersionsResponse);
+
+  // Initiate a resumable upload session.
+  rpc InitiateResumableUpload (InitiateResumableUploadRequest) returns (InitiateResumableUploadResponse);
+
+  // Resume an upload by streaming chunks from a given offset.
+  rpc ResumeUpload (stream ResumeUploadRequest) returns (UploadFileResponse);
+
+  // Get the current status of a resumable upload session.
+  rpc GetUploadStatus (GetUploadStatusRequest) returns (GetUploadStatusResponse);
+
+  // Copy a file to a new filename (server-side, no re-upload).
+  rpc CopyFile (CopyFileRequest) returns (CopyFileResponse);
+
+  // Move/rename a file (server-side rename).
+  rpc MoveFile (MoveFileRequest) returns (MoveFileResponse);
+}
+
+// Upload request — first message must contain file_info, subsequent messages contain chunk_data.
+message UploadFileRequest {
+  oneof data {
+    FileInfo file_info = 1;
+    bytes chunk_data = 2;
+  }
+}
+
+// Metadata sent in the first upload message.
+message FileInfo {
+  string filename = 1;
+  string content_type = 2;
+}
+
+// Response returned after upload stream completes.
+message UploadFileResponse {
+  string file_id = 1;
+  string filename = 2;
+  int64 size = 3;
+  string checksum = 4;
+  int32 version = 5;
+  Status status = 6;
+}
+
+// Request to download a file by ID and optional version.
+message DownloadFileRequest {
+  string file_id = 1;
+  int32 version = 2;
+}
+
+// Download response — first message contains metadata, subsequent messages contain chunk_data.
+message DownloadFileResponse {
+  oneof data {
+    FileMetadata metadata = 1;
+    bytes chunk_data = 2;
+  }
+}
+
+// Request to list or search files.
+message ListFilesRequest {
+  string search_query = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+}
+
+// Paginated list of file metadata.
+message ListFilesResponse {
+  repeated FileMetadata files = 1;
+  string next_page_token = 2;
+}
+
+// Request to get metadata for a single file.
+message GetFileMetadataRequest {
+  string file_id = 1;
+}
+
+// Request to delete a file.
+message DeleteFileRequest {
+  string file_id = 1;
+}
+
+// Response after file deletion.
+message DeleteFileResponse {
+  Status status = 1;
+}
+
+// Request to get version history for a file.
+message GetFileVersionsRequest {
+  string file_id = 1;
+}
+
+// List of version info records.
+message GetFileVersionsResponse {
+  repeated FileVersionInfo versions = 1;
+}
+
+// Version information for a single file version.
+message FileVersionInfo {
+  int32 version = 1;
+  int64 size = 2;
+  string checksum = 3;
+  google.protobuf.Timestamp created_at = 4;
+}
+
+// Full file metadata.
+message FileMetadata {
+  string file_id = 1;
+  string filename = 2;
+  string content_type = 3;
+  int64 size = 4;
+  string checksum = 5;
+  int32 current_version = 6;
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp updated_at = 8;
+}
+
+// Request to initiate a resumable upload session.
+message InitiateResumableUploadRequest {
+  string filename = 1;
+  string content_type = 2;
+  int64 total_size = 3;
+}
+
+// Response with the session ID for resumable upload.
+message InitiateResumableUploadResponse {
+  string session_id = 1;
+  Status status = 2;
+}
+
+// Request to resume an upload — first message must contain session header, subsequent messages contain chunks.
+message ResumeUploadRequest {
+  oneof data {
+    ResumeSessionHeader header = 1;
+    bytes chunk_data = 2;
+  }
+}
+
+// Header sent as the first message when resuming an upload.
+message ResumeSessionHeader {
+  string session_id = 1;
+  int64 offset = 2;
+}
+
+// Request to check the status of a resumable upload session.
+message GetUploadStatusRequest {
+  string session_id = 1;
+}
+
+// Response with the current state of a resumable upload session.
+message GetUploadStatusResponse {
+  string session_id = 1;
+  string filename = 2;
+  int64 bytes_received = 3;
+  int64 total_size = 4;
+  UploadState state = 5;
+}
+
+// Request to copy a file to a new filename.
+message CopyFileRequest {
+  string source_file_id = 1;
+  string destination_filename = 2;
+  int32 source_version = 3;
+}
+
+// Response after file copy.
+message CopyFileResponse {
+  FileMetadata file = 1;
+  Status status = 2;
+}
+
+// Request to move/rename a file.
+message MoveFileRequest {
+  string file_id = 1;
+  string new_filename = 2;
+}
+
+// Response after file move/rename.
+message MoveFileResponse {
+  FileMetadata file = 1;
+  Status status = 2;
+}
+
+// State of a resumable upload session.
+enum UploadState {
+  UPLOAD_STATE_UNSPECIFIED = 0;
+  UPLOAD_STATE_IN_PROGRESS = 1;
+  UPLOAD_STATE_COMPLETED = 2;
+  UPLOAD_STATE_FAILED = 3;
+}
+
+// Operation status.
+enum Status {
+  STATUS_UNSPECIFIED = 0;
+  STATUS_SUCCESS = 1;
+  STATUS_FAILED = 2;
+}
