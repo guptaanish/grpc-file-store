@@ -16,17 +16,22 @@ import org.slf4j.MDC;
 import org.springframework.context.ApplicationEventPublisher;
 
 import com.example.filestore.config.FileStoreProperties;
+import com.example.filestore.entity.FileEntity;
+import com.example.filestore.entity.FileVersionEntity;
 import com.example.filestore.event.FileDeletedEvent;
 import com.example.filestore.event.FileUploadedEvent;
 import com.example.filestore.interceptor.MdcKeys;
 import com.example.filestore.mapper.FileProtoMapper;
+import com.example.filestore.service.ChecksumLockManager;
 import com.example.filestore.service.ChecksumService;
 import com.example.filestore.service.FileLockManager;
 import com.example.filestore.service.FileNotFoundException;
+import com.example.filestore.service.FilenameLockManager;
 import com.example.filestore.service.MetadataService;
 import com.example.filestore.service.QuotaService;
 import com.example.filestore.service.ResumableUploadManager;
 import com.example.filestore.service.ResumableUploadSession;
+import com.example.filestore.service.StorageReclamationService;
 import com.example.filestore.service.StorageService;
 import com.example.filestore.service.UploadSession;
 import com.example.filestore.service.UploadTracker;
@@ -60,6 +65,16 @@ public class FileStoreGrpcService extends FileStoreServiceGrpc.FileStoreServiceI
     private final FileLockManager fileLockManager;
 
     /**
+     * Filename lock manager to serialize file-record creation per filename.
+     */
+    private final FilenameLockManager filenameLockManager;
+
+    /**
+     * Checksum lock manager to serialize deduplication against reclamation.
+     */
+    private final ChecksumLockManager checksumLockManager;
+
+    /**
      * Upload tracker for active session monitoring.
      */
     private final UploadTracker uploadTracker;
@@ -83,6 +98,11 @@ public class FileStoreGrpcService extends FileStoreServiceGrpc.FileStoreServiceI
      * Quota enforcement service.
      */
     private final QuotaService quotaService;
+
+    /**
+     * Reference-counted storage reclamation service.
+     */
+    private final StorageReclamationService storageReclamationService;
 
     /**
      * Application configuration properties.
@@ -167,24 +187,13 @@ public class FileStoreGrpcService extends FileStoreServiceGrpc.FileStoreServiceI
                     tempOutput.close();
                     final var checksum = checksumService.finish(digest);
                     quotaService.checkQuota(totalSize);
-                    final var file = metadataService.createOrGetFile(fileInfo.getFilename(), fileInfo.getContentType());
+                    final var file = createOrGetFileLocked(fileInfo.getFilename(), fileInfo.getContentType());
                     MDC.put(MdcKeys.FILE_ID, file.getId().toString());
                     final var lock = fileLockManager.getLock(file.getId()).writeLock();
                     lock.lock();
                     try {
-                        // Content-addressable dedup: reuse existing storage if checksum matches
-                        final var existingPath = metadataService.findStoragePathByChecksum(checksum);
-                        final String storagePath;
-                        if (existingPath.isPresent()) {
-                            storagePath = existingPath.get();
-                            log.info("Deduplication: reusing storage for checksum {}", checksum);
-                        } else {
-                            try (var input = java.nio.file.Files.newInputStream(tempFile)) {
-                                storagePath = storageService.store(
-                                        file.getId(), file.getCurrentVersion() + 1, fileInfo.getFilename(), input);
-                            }
-                        }
-                        final var version = metadataService.createVersion(file, storagePath, totalSize, checksum);
+                        final var version = storeVersionDeduplicated(
+                                file, checksum, totalSize, tempFile, fileInfo.getFilename());
                         MDC.put(MdcKeys.VERSION, String.valueOf(version.getVersion()));
                         MDC.put(MdcKeys.BYTES_TRANSFERRED, String.valueOf(totalSize));
 
@@ -335,7 +344,14 @@ public class FileStoreGrpcService extends FileStoreServiceGrpc.FileStoreServiceI
                 .orElseThrow(() -> FileNotFoundException.forFile(fileId));
 
         MDC.put(MdcKeys.FILENAME, file.getFilename());
-        metadataService.softDelete(fileId);
+        final var lock = fileLockManager.getLock(fileId).writeLock();
+        lock.lock();
+        try {
+            metadataService.softDelete(fileId);
+            storageReclamationService.reclaimOrphanedStorage(fileId);
+        } finally {
+            lock.unlock();
+        }
         eventPublisher.publishEvent(new FileDeletedEvent(fileId, file.getFilename()));
         responseObserver.onNext(DeleteFileResponse.newBuilder()
                 .setStatus(com.example.filestore.grpc.Status.STATUS_SUCCESS)
@@ -435,7 +451,7 @@ public class FileStoreGrpcService extends FileStoreServiceGrpc.FileStoreServiceI
                 final var completed = resumableUploadManager.complete(session.sessionId());
                 try {
                     final var checksum = checksumService.finish(digest);
-                    final var file = metadataService.createOrGetFile(completed.filename(), completed.contentType());
+                    final var file = createOrGetFileLocked(completed.filename(), completed.contentType());
                     MDC.put(MdcKeys.FILE_ID, file.getId().toString());
 
                     final var lock = fileLockManager.getLock(file.getId()).writeLock();
@@ -534,6 +550,65 @@ public class FileStoreGrpcService extends FileStoreServiceGrpc.FileStoreServiceI
                 .build());
         responseObserver.onCompleted();
         log.info("MoveFile completed: {} → {}", fileId, request.getNewFilename());
+    }
+
+    /**
+     * Creates or retrieves a file record while holding the filename stripe lock.
+     *
+     * <p>Serializing on the filename prevents two concurrent uploads of the same new
+     * filename from each inserting a duplicate file record.
+     *
+     * @param filename    the filename.
+     * @param contentType the MIME content type.
+     * @return the existing or newly created file entity.
+     */
+    private FileEntity createOrGetFileLocked(String filename, String contentType) {
+        final var nameLock = filenameLockManager.getLock(filename);
+        nameLock.lock();
+        try {
+            return metadataService.createOrGetFile(filename, contentType);
+        } finally {
+            nameLock.unlock();
+        }
+    }
+
+    /**
+     * Stores a new version, deduplicating storage by checksum, while holding the
+     * checksum stripe lock.
+     *
+     * <p>The checksum lock is shared with {@code StorageReclamationService} so that a
+     * concurrent delete cannot reclaim the storage path this upload is deduplicating
+     * onto.
+     *
+     * @param file     the parent file entity.
+     * @param checksum the content checksum.
+     * @param size     the file size in bytes.
+     * @param tempFile the temporary file holding the uploaded content.
+     * @param filename the original filename (used for the storage path).
+     * @return the created version entity.
+     * @throws IOException if reading the temp file fails.
+     */
+    private FileVersionEntity storeVersionDeduplicated(
+            FileEntity file, String checksum, long size, java.nio.file.Path tempFile, String filename)
+            throws IOException {
+        final var checksumLock = checksumLockManager.getLock(checksum);
+        checksumLock.lock();
+        try {
+            final var existingPath = metadataService.findStoragePathByChecksum(checksum);
+            final String storagePath;
+            if (existingPath.isPresent()) {
+                storagePath = existingPath.get();
+                log.info("Deduplication: reusing storage for checksum {}", checksum);
+            } else {
+                try (var input = java.nio.file.Files.newInputStream(tempFile)) {
+                    storagePath = storageService.store(
+                            file.getId(), file.getCurrentVersion() + 1, filename, input);
+                }
+            }
+            return metadataService.createVersion(file, storagePath, size, checksum);
+        } finally {
+            checksumLock.unlock();
+        }
     }
 
     /**

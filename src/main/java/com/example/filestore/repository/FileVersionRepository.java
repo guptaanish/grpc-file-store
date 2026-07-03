@@ -42,12 +42,31 @@ public interface FileVersionRepository extends JpaRepository<FileVersionEntity, 
     Optional<FileVersionEntity> findTopByFileIdOrderByVersionDesc(UUID fileId);
 
     /**
-     * Finds any version with the given checksum (for deduplication).
+     * Finds storage paths of versions with the given checksum that belong to
+     * non-deleted files (for content-addressable deduplication).
+     *
+     * <p>Deleted files are excluded so that a new upload only deduplicates onto a
+     * storage path that is still live and therefore counted by {@link
+     * #countActiveReferences(String)}.
      *
      * @param checksum the SHA-256 checksum.
-     * @return an optional containing a version with that checksum.
+     * @return storage paths of active versions sharing that checksum.
      */
-    Optional<FileVersionEntity> findFirstByChecksum(String checksum);
+    @Query("SELECT v.storagePath FROM FileVersionEntity v WHERE v.checksum = :checksum AND v.file.deleted = false")
+    List<String> findActiveStoragePathsByChecksum(String checksum);
+
+    /**
+     * Counts versions referencing the given storage path that belong to
+     * non-deleted files.
+     *
+     * <p>Used for reference-counted storage reclamation: a storage path is safe to
+     * physically delete only when no active file version still references it.
+     *
+     * @param storagePath the storage path.
+     * @return the number of active references to the storage path.
+     */
+    @Query("SELECT COUNT(v) FROM FileVersionEntity v WHERE v.storagePath = :storagePath AND v.file.deleted = false")
+    long countActiveReferences(String storagePath);
 
     /**
      * Returns the total size of all stored file versions.

@@ -135,7 +135,6 @@ public class JpaMetadataService implements MetadataService {
     @Override
     @Transactional(readOnly = true)
     public Optional<String> findStoragePathByChecksum(String checksum) {
-        return fileVersionRepository.findFirstByChecksum(checksum)
-                .map(FileVersionEntity::getStoragePath);
+        return fileVersionRepository.findActiveStoragePathsByChecksum(checksum).stream().findFirst();
     }
 }

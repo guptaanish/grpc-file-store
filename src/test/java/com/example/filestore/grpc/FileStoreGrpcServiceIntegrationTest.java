@@ -511,4 +511,118 @@ class FileStoreGrpcServiceIntegrationTest {
                 .setFileId(upload2.getFileId()).build());
         assertTrue(download2.hasNext());
     }
+
+    @Test
+    void shouldRetainSharedStorageWhenDeletingOneDeduplicatedFile() throws Exception {
+        final var content = "shared content that is deduplicated across two files";
+
+        final var fileA = uploadTestFile("dedup-del-a.txt", "text/plain", content);
+        final var fileB = uploadTestFile("dedup-del-b.txt", "text/plain", content);
+        assertEquals(fileA.getChecksum(), fileB.getChecksum());
+
+        // Delete one of the two files sharing the same physical storage.
+        blockingStub.deleteFile(DeleteFileRequest.newBuilder().setFileId(fileA.getFileId()).build());
+
+        // The surviving file must still download its full content intact,
+        // proving the shared storage was not reclaimed.
+        final var responses = blockingStub.downloadFile(DownloadFileRequest.newBuilder()
+                .setFileId(fileB.getFileId()).build());
+        assertTrue(responses.hasNext());
+        responses.next(); // metadata frame
+
+        final var downloaded = new StringBuilder();
+        while (responses.hasNext()) {
+            downloaded.append(responses.next().getChunkData().toStringUtf8());
+        }
+        assertEquals(content, downloaded.toString());
+    }
+
+    @Test
+    void shouldNotCreateDuplicateFilesUnderConcurrentUpload() throws Exception {
+        final int threads = 6;
+        final var filename = "concurrent-dup.txt";
+        final var content = "concurrent identical content";
+
+        final var startLatch = new CountDownLatch(1);
+        final var doneLatch = new CountDownLatch(threads);
+        final var errors = new java.util.concurrent.CopyOnWriteArrayList<Throwable>();
+        final var executor = java.util.concurrent.Executors.newFixedThreadPool(threads);
+        final var concurrentChannel = InProcessChannelBuilder.forName("test").build();
+
+        try {
+            for (int i = 0; i < threads; i++) {
+                executor.submit(() -> {
+                    try {
+                        startLatch.await();
+                        uploadOnChannel(concurrentChannel, filename, content);
+                    } catch (Throwable t) {
+                        errors.add(t);
+                    } finally {
+                        doneLatch.countDown();
+                    }
+                });
+            }
+            startLatch.countDown();
+            assertTrue(doneLatch.await(30, TimeUnit.SECONDS), "concurrent uploads did not finish in time");
+        } finally {
+            executor.shutdownNow();
+            concurrentChannel.shutdownNow();
+        }
+
+        assertTrue(errors.isEmpty(), () -> "concurrent uploads errored: " + errors);
+
+        // Exactly one file record must exist for the filename (no duplicate entities).
+        final var list = blockingStub.listFiles(ListFilesRequest.newBuilder()
+                .setSearchQuery(filename)
+                .setPageSize(50)
+                .build());
+        final var matches = list.getFilesList().stream()
+                .filter(f -> f.getFilename().equals(filename))
+                .toList();
+        assertEquals(1, matches.size(), "concurrent uploads of the same filename must yield a single file");
+
+        // All uploads must have attached versions to that single file.
+        final var versions = blockingStub.getFileVersions(GetFileVersionsRequest.newBuilder()
+                .setFileId(matches.get(0).getFileId())
+                .build());
+        assertEquals(threads, versions.getVersionsCount());
+    }
+
+    private void uploadOnChannel(ManagedChannel ch, String filename, String content) throws InterruptedException {
+        final var stub = FileStoreServiceGrpc.newStub(ch);
+        final var latch = new CountDownLatch(1);
+        final var errorRef = new AtomicReference<Throwable>();
+
+        final var requestObserver = stub.uploadFile(new StreamObserver<UploadFileResponse>() {
+            @Override
+            public void onNext(UploadFileResponse response) {
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                errorRef.set(t);
+                latch.countDown();
+            }
+
+            @Override
+            public void onCompleted() {
+                latch.countDown();
+            }
+        });
+
+        requestObserver.onNext(UploadFileRequest.newBuilder()
+                .setFileInfo(FileInfo.newBuilder().setFilename(filename).setContentType("text/plain").build())
+                .build());
+        requestObserver.onNext(UploadFileRequest.newBuilder()
+                .setChunkData(ByteString.copyFrom(content, StandardCharsets.UTF_8))
+                .build());
+        requestObserver.onCompleted();
+
+        if (!latch.await(15, TimeUnit.SECONDS)) {
+            throw new AssertionError("upload timed out for " + filename);
+        }
+        if (errorRef.get() != null) {
+            throw new RuntimeException(errorRef.get());
+        }
+    }
 }
