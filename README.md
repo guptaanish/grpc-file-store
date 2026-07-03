@@ -5,7 +5,7 @@ A Spring Boot application exposing a gRPC API for file storage with streaming up
 ## Prerequisites
 
 - **Java 21** (Corretto, Temurin, or any OpenJDK distribution)
-- **Gradle 9.5.1** (wrapper included)
+- **Gradle 9.6.0** (wrapper included)
 
 ## Build & Run
 
@@ -26,7 +26,7 @@ A Spring Boot application exposing a gRPC API for file storage with streaming up
 ./gradlew test
 ```
 
-39 tests (18 integration + 21 unit) covering upload/download round-trip, multi-chunk streaming, versioning, search, delete, version history, resumable uploads, file copy/move, content-addressable deduplication, quota enforcement, TTL auto-expiry, error cases, health indicators, checksums, storage, and concurrency components.
+47 tests (20 integration + 27 unit) covering upload/download round-trip, multi-chunk streaming, versioning, search, delete, version history, resumable uploads, file copy/move, content-addressable deduplication, reference-counted storage reclamation, concurrent-upload de-duplication of file records, quota enforcement, TTL auto-expiry, error cases, health indicators, checksums, storage, and concurrency components (per-file, filename, and checksum striped locks).
 
 ## Code Formatting
 
@@ -122,7 +122,14 @@ src/main/java/com/example/filestore/
 │   ├── MetadataService.java                 # Interface: metadata CRUD
 │   ├── ChecksumService.java                 # Interface: hashing
 │   ├── FileLockManager.java                 # Per-file ReadWriteLock manager
+│   ├── StripedLockManager.java              # Base: fixed-pool striped locks
+│   ├── FilenameLockManager.java             # Striped locks keyed by filename
+│   ├── ChecksumLockManager.java             # Striped locks keyed by checksum
 │   ├── FileNotFoundException.java           # Domain exception
+│   ├── StorageQuotaExceededException.java   # Domain exception (quota)
+│   ├── QuotaService.java                    # Global storage quota enforcement
+│   ├── FileExpiryService.java               # Scheduled TTL soft-delete job
+│   ├── StorageReclamationService.java       # Ref-counted storage reclamation
 │   ├── ResumableUploadManager.java          # Resumable upload session manager
 │   ├── ResumableUploadSession.java          # Resumable session state record
 │   ├── UploadSession.java                   # Upload session record

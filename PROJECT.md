@@ -5,18 +5,18 @@
 | Layer | Technology | Version |
 |-------|-----------|---------|
 | Language | Java | 21 |
-| Framework | Spring Boot | 3.4.1 |
-| Build | Gradle (Kotlin DSL) | 9.5.1 |
+| Framework | Spring Boot | 3.5.16 |
+| Build | Gradle (Kotlin DSL) | 9.6.0 |
 | gRPC | grpc-spring-boot-starter (net.devh) | 3.1.0.RELEASE |
-| Protobuf | proto3 | 4.29.2 |
-| gRPC Core | io.grpc | 1.68.2 |
+| Protobuf | proto3 | 4.35.1 |
+| gRPC Core | io.grpc | 1.78.0 |
 | Database | H2 (in-memory) | Spring Boot managed |
 | ORM | Spring Data JPA / Hibernate | Spring Boot managed |
 | Mapping | MapStruct | 1.6.3 |
 | Metrics | Micrometer | Spring Boot managed |
 | Logging | SLF4J + Logback + Logstash Encoder | 8.0 |
 | Lombok | Lombok | Spring Boot managed |
-| Formatting | Spotless | 7.0.4 |
+| Formatting | Spotless | 8.4.0 |
 
 ## Architecture
 
@@ -81,6 +81,8 @@
 |----------|-----------|
 | gRPC requests | Virtual threads (Project Loom) |
 | File read/write | `ReadWriteLock` per file via `FileLockManager` |
+| File-record creation | Striped lock keyed by filename (`FilenameLockManager`) — prevents duplicate file records |
+| Dedup vs. reclamation | Striped lock keyed by checksum (`ChecksumLockManager`) — shared by upload dedup and storage reclamation |
 | Upload tracking | `ConcurrentHashMap` in `UploadTracker` |
 | Version counter | `@Transactional(isolation = SERIALIZABLE)` |
 | Checksum digest | Thread-local per upload stream (no sharing) |
@@ -167,12 +169,13 @@ Exceptions are mapped to gRPC status codes via `ExceptionHandlerInterceptor`:
 
 ## Current State
 
-- [x] Proto definition with 6 RPCs + health check
+- [x] Proto definition with 11 RPCs + health check
 - [x] Client-streaming upload with incremental SHA-256
 - [x] Server-streaming download with chunked response
 - [x] Resumable uploads (initiate session, resume from offset, status check)
 - [x] File copy/move (server-side zero-copy and rename)
 - [x] Content-addressable deduplication (SHA-256 checksum reuse)
+- [x] Reference-counted storage reclamation (physical delete when no active version references a path)
 - [x] Global storage quota management (RESOURCE_EXHAUSTED when exceeded)
 - [x] TTL auto-expiry (scheduled cleanup of files exceeding retention period)
 - [x] Paginated search (case-insensitive filename LIKE)
@@ -187,6 +190,6 @@ Exceptions are mapped to gRPC status codes via `ExceptionHandlerInterceptor`:
 - [x] Periodic heartbeat logging (configurable interval)
 - [x] Structured JSON logging (prod profile)
 - [x] Spotless code formatting (import order, whitespace, newlines)
-- [x] Test coverage > 91% (39 tests: 18 integration + 21 unit)
+- [x] Test coverage > 91% (47 tests: 20 integration + 27 unit)
 - [x] Guard clause pattern throughout
 - [x] JaCoCo coverage reporting
