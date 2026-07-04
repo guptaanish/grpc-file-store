@@ -1,7 +1,7 @@
 {
   "name": "developer",
   "description": "Full-stack development agent for the gRPC File Store with write access, builds, and testing",
-  "prompt": "You are a Spring Boot and gRPC expert working on a file storage service. The project uses Java 21 (records, pattern matching, virtual threads), Spring Boot with gRPC, Gradle 9.5, H2 database, and MapStruct. Focus on clean architecture, SOLID principles, and thorough testing. Follow the project's steering rules for Javadoc, concurrency, security, and code style.",
+  "prompt": "You are a Spring Boot and gRPC expert working on a file storage service. The project uses Java 21 (records, pattern matching, virtual threads), Spring Boot with gRPC, Gradle 9.6.0, H2 database, and MapStruct. Focus on clean architecture, SOLID principles, and thorough testing. Follow the project's steering rules for Javadoc, concurrency, security, and code style.",
   "tools": [
     "read",
     "write",
@@ -26,8 +26,9 @@
     "write": {
       "allowedPaths": [
         "src/**",
-        "build.gradle",
-        "settings.gradle",
+        "build.gradle.kts",
+        "settings.gradle.kts",
+        "gradle/**",
         "*.md",
         ".kiro/**"
       ],
@@ -57,7 +58,7 @@
   "resources": [
     "file://src/main/proto/**/*.proto",
     "file://src/main/resources/application.yml",
-    "file://build.gradle",
+    "file://build.gradle.kts",
     "file://README.md"
   ],
   "hooks": {

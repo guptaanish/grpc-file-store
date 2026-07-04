@@ -11,7 +11,7 @@ Verify that all documentation matches the current codebase state and fix any dis
 
 1. Inventory all classes in `src/main/java/` and compare against README.md project structure.
 2. Inventory all gRPC RPCs in the proto file and compare against README.md API table.
-3. Check every feature in REQUIREMENTS.md is implemented (or marked as planned).
+3. Check every feature described in PROJECT.md is implemented (or marked as planned), and that its technology-stack table matches `build.gradle.kts` and the Gradle wrapper version.
 4. Check for stale references in `*.md` files — no references to classes, packages, methods, files, or features that have been deleted, moved, or renamed.
 5. Verify all Javadoc `@param`/`@return`/`@throws` match current method signatures.
 6. Verify configuration properties documented match what exists in `application.yml`.

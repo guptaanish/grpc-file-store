@@ -3,7 +3,7 @@
 ## Version Pinning
 
 - **Pin all dependency versions** — Use exact versions, not dynamic ranges (`1.5.+`, `latest.release`).
-- Use Gradle version catalogs (`libs.versions.toml`) for centralized version management.
+- Centralize version numbers in one place. This project declares them as `val` constants at the top of `build.gradle.kts`; a Gradle version catalog (`gradle/libs.versions.toml`) is the preferred approach if the dependency set grows.
 - Use Spring Boot's dependency management BOM for managed dependencies.
 - Override BOM versions only with justification (security fix, bug fix).
 
@@ -17,7 +17,7 @@
 
 ## Security & Vulnerability Scanning
 
-- Run dependency vulnerability checks as part of CI (`dependencyCheckAnalyze` or equivalent).
+- Run dependency vulnerability checks in CI when a scanner is configured (e.g., the OWASP `dependencyCheckAnalyze` task, Gradle's `dependencies` audit, or an equivalent). This project does not yet wire one in — adding it is a recommended hardening step.
 - Address CRITICAL and HIGH CVEs within one sprint; MEDIUM within the quarter.
 - Subscribe to security advisories for critical dependencies.
 - Review transitive dependencies — a direct dependency may pull in vulnerable transitives.

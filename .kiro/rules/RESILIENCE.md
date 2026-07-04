@@ -50,6 +50,22 @@
 - Enforce request size limits at the entry point (gRPC `maxInboundMessageSize`).
 - Use bulkheads to isolate critical paths from non-critical ones.
 
+## Rate Limiting
+
+- Enforce per-client rate limits at the entry point (an early `ServerInterceptor`) to protect the
+  service from abusive or runaway callers, independent of the global concurrency cap above.
+- Key limits by authenticated principal or API key; fall back to remote address only when no
+  identity is available.
+- Reject throttled calls with `RESOURCE_EXHAUSTED` and a clear (non-leaking) message; where the
+  protocol allows, hint at a retry-after interval.
+- Apply stricter limits to expensive RPCs (`UploadFile`, `ResumeUpload`, `DownloadFile`) than to
+  cheap metadata reads (`GetFileMetadata`, `ListFiles`).
+- Prefer a token-bucket or sliding-window algorithm; keep the limiter state thread-safe and, for
+  multi-instance deployments, backed by a shared store rather than per-instance memory.
+- Emit metrics for throttled vs. accepted calls (bounded labels, see `OBSERVABILITY.md`) so limits
+  can be tuned and abuse detected.
+- Exempt health checks from rate limiting.
+
 ## Idempotency
 
 - Design mutating operations to be safely retryable.

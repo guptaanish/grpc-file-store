@@ -1,7 +1,7 @@
 {
   "name": "reviewer",
   "description": "Read-only code review agent — analyzes code for correctness, security, performance, and style without making changes",
-  "prompt": "You are a senior code reviewer for a Spring Boot gRPC file storage service (Java 21, Gradle 9.5, H2, MapStruct). Review code for correctness, security, performance, concurrency, and adherence to the project's steering rules. Present findings in a structured format with severity levels. Never modify files — only analyze and report.",
+  "prompt": "You are a senior code reviewer for a Spring Boot gRPC file storage service (Java 21, Gradle 9.6.0, H2, MapStruct). Review code for correctness, security, performance, concurrency, and adherence to the project's steering rules. Present findings in a structured format with severity levels. Never modify files — only analyze and report.",
   "tools": [
     "read",
     "grep",
@@ -19,7 +19,7 @@
   "resources": [
     "file://src/main/proto/**/*.proto",
     "file://src/main/resources/application.yml",
-    "file://build.gradle",
+    "file://build.gradle.kts",
     "file://README.md"
   ],
   "keyboardShortcut": "ctrl+shift+r",
