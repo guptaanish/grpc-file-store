@@ -20,40 +20,49 @@
 
 ## Architecture
 
-```
-┌──────────────────────────────────────────────────────────┐
-│                     gRPC Clients                         │
-└────────────────────────┬─────────────────────────────────┘
-                         │ gRPC (HTTP/2) port 9090
-                         ▼
-┌──────────────────────────────────────────────────────────┐
-│              Interceptor Chain (ordered)                  │
-│  1. LoggingInterceptor     → MDC context + duration      │
-│  2. ValidationInterceptor  → Request validation hook     │
-│  3. MetricsInterceptor     → Micrometer timers/counters  │
-│  4. ExceptionHandlerInterceptor → Exception → Status     │
-└────────────────────────┬─────────────────────────────────┘
-                         ▼
-┌──────────────────────────────────────────────────────────┐
-│              gRPC Service Layer                           │
-│  FileStoreGrpcService    HealthCheckService              │
-└───────┬──────────────┬────────────────┬──────────────────┘
-        │              │                │
-┌───────▼──────┐ ┌─────▼─────────┐ ┌───▼────────────────┐
-│ StorageService│ │MetadataService│ │ ChecksumService    │
-│  (interface)  │ │  (interface)  │ │   (interface)      │
-├──────────────┤ ├──────────────┤ ├────────────────────┤
-│LocalFileStor.│ │JpaMetadataSvc│ │Sha256ChecksumSvc   │
-└──────────────┘ └──────┬───────┘ └────────────────────┘
-                        │
-                 ┌──────▼───────┐
-                 │ Spring Data  │
-                 │ JPA Repos    │
-                 └──────┬───────┘
-                        │
-                 ┌──────▼───────┐
-                 │   H2 (mem)   │
-                 └──────────────┘
+```mermaid
+graph TD
+    Clients["gRPC Clients"]
+
+    subgraph Interceptors["Interceptor Chain (ordered)"]
+        I1["1. LoggingInterceptor<br/>MDC context + duration"]
+        I2["2. ValidationInterceptor<br/>Request validation hook"]
+        I3["3. MetricsInterceptor<br/>Micrometer timers/counters"]
+        I4["4. ExceptionHandlerInterceptor<br/>Exception → Status"]
+    end
+
+    subgraph ServiceLayer["gRPC Service Layer"]
+        GRPC["FileStoreGrpcService"]
+        Health["HealthCheckService"]
+    end
+
+    subgraph Interfaces["Service Interfaces"]
+        Storage["StorageService<br/>(interface)"]
+        Metadata["MetadataService<br/>(interface)"]
+        Checksum["ChecksumService<br/>(interface)"]
+    end
+
+    subgraph Implementations["Implementations"]
+        LocalStorage["LocalFileStorageService"]
+        JpaMeta["JpaMetadataService"]
+        Sha256["Sha256ChecksumService"]
+    end
+
+    subgraph DataLayer["Data Layer"]
+        JPA["Spring Data JPA Repos"]
+        H2["H2 (in-memory)"]
+    end
+
+    Clients -->|"gRPC (HTTP/2) port 9090"| Interceptors
+    Interceptors --> ServiceLayer
+    GRPC --> Storage
+    GRPC --> Metadata
+    GRPC --> Checksum
+    Storage --> LocalStorage
+    Metadata --> JpaMeta
+    Checksum --> Sha256
+    JpaMeta --> JPA
+    JPA --> H2
 ```
 
 ## Design Principles

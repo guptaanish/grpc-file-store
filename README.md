@@ -54,10 +54,14 @@ Frontend dev server starts on `http://localhost:5173`.
 
 ## Architecture
 
-```
-Browser (React + MUI)
-├── gRPC-Web (unary/server-streaming) ──→ Envoy:8081 ──→ gRPC:9090
-└── REST (uploads/downloads) ──→ Spring Boot:8080
+```mermaid
+graph LR
+    Browser["Browser (React + MUI)"]
+
+    Browser -->|"gRPC-Web (unary/server-streaming)"| Envoy["Envoy :8081"]
+    Envoy -->|"gRPC (HTTP/2)"| gRPC["Spring Boot gRPC :9090"]
+
+    Browser -->|"REST (uploads/downloads)"| REST["Spring Boot REST :8080"]
 ```
 
 ### Why the Hybrid Approach?
