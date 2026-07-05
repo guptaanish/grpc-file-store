@@ -110,7 +110,13 @@ src/main/java/com/example/filestore/
 │   ├── FileStoreProperties.java             # @ConfigurationProperties (filestore.*)
 │   ├── StorageProperties.java               # Storage backend config record
 │   ├── StorageType.java                     # Enum: LOCAL, S3, GCS
-│   └── StorageAutoConfiguration.java        # @ConditionalOnProperty bean factory
+│   ├── StorageAutoConfiguration.java        # @ConditionalOnProperty bean factory
+│   ├── WebCorsConfiguration.java            # CORS configuration for frontend
+│   └── WebStaticResourceConfiguration.java  # SPA static resource fallback
+├── rest/
+│   ├── FileUploadController.java            # REST multipart + resumable upload
+│   ├── FileDownloadController.java          # REST file download (save-as)
+│   └── UploadResponse.java                  # Upload response DTO record
 ├── entity/
 │   ├── FileEntity.java                      # JPA entity: file metadata
 │   └── FileVersionEntity.java              # JPA entity: file version

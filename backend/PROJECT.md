@@ -15,6 +15,7 @@
 | Mapping | MapStruct | 1.6.3 |
 | Metrics | Micrometer | Spring Boot managed |
 | Logging | SLF4J + Logback + Logstash Encoder | 8.0 |
+| Web | Spring Boot Starter Web | Spring Boot managed |
 | Lombok | Lombok | Spring Boot managed |
 | Formatting | Spotless | 8.4.0 |
 
@@ -202,3 +203,9 @@ Exceptions are mapped to gRPC status codes via `ExceptionHandlerInterceptor`:
 - [x] Test coverage > 91% (47 tests: 20 integration + 27 unit)
 - [x] Guard clause pattern throughout
 - [x] JaCoCo coverage reporting
+- [x] REST upload controller (multipart + resumable, for gRPC-Web browser compatibility)
+- [x] REST download controller (Content-Disposition attachment for browser save-as)
+- [x] CORS configuration (externalized allowed origins)
+- [x] SPA static resource serving (frontend build served from Spring Boot)
+- [x] React + MUI frontend (gRPC-Web via Envoy + REST uploads/downloads)
+- [x] Docker Compose deployment (single image: backend + frontend + Envoy)
