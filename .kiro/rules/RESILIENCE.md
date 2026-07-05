@@ -17,6 +17,15 @@
 
 ## Circuit Breakers
 
+```mermaid
+stateDiagram-v2
+    [*] --> Closed
+    Closed --> Open : Failure threshold exceeded
+    Open --> HalfOpen : Wait duration expires
+    HalfOpen --> Closed : Probe succeeds
+    HalfOpen --> Open : Probe fails
+```
+
 - Use circuit breakers for calls to external services or unreliable dependencies.
 - Define failure thresholds, open duration, and half-open probe count.
 - Provide fallback behavior when the circuit is open (degraded response, cached data, or clear error).
@@ -29,6 +38,15 @@
 - Return partial results with appropriate indicators rather than failing entirely when possible.
 
 ## Graceful Shutdown
+
+```mermaid
+graph TD
+    SIGTERM["SIGTERM received"] --> Stop["Stop accepting new requests"]
+    Stop --> Drain["Drain in-flight requests<br/>(within timeout)"]
+    Drain --> Close["Close connections"]
+    Close --> Flush["Flush logs"]
+    Flush --> Exit["Process exit"]
+```
 
 - Handle `SIGTERM` to initiate graceful shutdown.
 - Stop accepting new requests, finish in-flight requests within a timeout.
@@ -58,8 +76,8 @@
   identity is available.
 - Reject throttled calls with `RESOURCE_EXHAUSTED` and a clear (non-leaking) message; where the
   protocol allows, hint at a retry-after interval.
-- Apply stricter limits to expensive RPCs (`UploadFile`, `ResumeUpload`, `DownloadFile`) than to
-  cheap metadata reads (`GetFileMetadata`, `ListFiles`).
+- Apply stricter limits to expensive RPCs (e.g., file uploads, streaming downloads) than to
+  cheap metadata reads (e.g., get metadata, list queries).
 - Prefer a token-bucket or sliding-window algorithm; keep the limiter state thread-safe and, for
   multi-instance deployments, backed by a shared store rather than per-instance memory.
 - Emit metrics for throttled vs. accepted calls (bounded labels, see `OBSERVABILITY.md`) so limits

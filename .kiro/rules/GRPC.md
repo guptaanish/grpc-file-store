@@ -5,7 +5,7 @@
 - Use `snake_case` for field names and file names.
 - Use `PascalCase` for message and service names.
 - Use `UPPER_SNAKE_CASE` for enum values with a `_UNSPECIFIED = 0` sentinel.
-- Package naming: `<organization>.<service>.v<major>` (e.g., `filestore.v1`).
+- Package naming: `<organization>.<service>.v<major>` (e.g., `myservice.v1`).
 - One service per `.proto` file; shared messages may live in a separate file.
 - Add comments on every service, RPC, message, and field.
 
@@ -21,7 +21,7 @@
   - `UNAVAILABLE` — Transient failure, client may retry.
   - `DEADLINE_EXCEEDED` — Operation took too long.
 - Never expose stack traces or internal implementation details in status descriptions.
-- Use a global `ExceptionHandlerInterceptor` to centralize error translation.
+- Use a global exception-handling interceptor to centralize error translation.
 
 ## Streaming Best Practices
 
@@ -32,6 +32,15 @@
 - **Cancellation** — Handle `onCancel` to release resources when clients disconnect.
 
 ## Interceptors
+
+```mermaid
+graph LR
+    Client["gRPC Client"] --> I1["1. Logging<br/>(MDC + duration)"]
+    I1 --> I2["2. Validation<br/>(request validation)"]
+    I2 --> I3["3. Metrics<br/>(timers/counters)"]
+    I3 --> I4["4. Exception Handler<br/>(exception → Status)"]
+    I4 --> Service["gRPC Service"]
+```
 
 - Use `ServerInterceptor` for cross-cutting concerns (logging, metrics, validation, auth).
 - Order interceptors explicitly (e.g., logging → validation → metrics → exception handling).

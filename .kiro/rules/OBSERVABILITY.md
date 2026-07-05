@@ -2,6 +2,17 @@
 
 ## The Three Pillars
 
+```mermaid
+graph LR
+    Request["Incoming Request"] --> Metrics["📊 Metrics<br/>(Micrometer)"]
+    Request --> Logs["📝 Logs<br/>(SLF4J + MDC)"]
+    Request --> Traces["🔗 Traces<br/>(OpenTelemetry)"]
+    Metrics --> Dashboard["Dashboards & Alerts"]
+    Logs --> Search["Log Search & Analysis"]
+    Traces --> Correlation["Cross-service Correlation"]
+    Logs -.->|"traceId in MDC"| Traces
+```
+
 - Every service must emit **metrics**, **logs**, and **traces**.
 - Use Micrometer for metrics, SLF4J for logging, and OpenTelemetry (or Micrometer Tracing) for distributed traces.
 - Observability instrumentation should not affect business logic — keep it in interceptors, aspects, or decorators.
@@ -11,7 +22,7 @@
 ### Naming Conventions
 
 - Use Micrometer/Prometheus naming: `snake_case`, dot-separated namespace.
-- Format: `<application>.<component>.<action>.<unit>` (e.g., `filestore.upload.duration.seconds`).
+- Format: `<application>.<component>.<action>.<unit>` (e.g., `myapp.upload.duration.seconds`).
 - Use standard suffixes: `.total` (counters), `.seconds` (durations), `.bytes` (sizes).
 - Timer names describe what is being timed (e.g., `grpc.server.call.duration`).
 
@@ -61,7 +72,7 @@
 
 - `traceId` — Distributed trace ID for cross-service correlation.
 - `spanId` — Current span for intra-service correlation.
-- `rpc.method` — gRPC method name (e.g., `UploadFile`).
+- `rpc.method` — gRPC method name (e.g., `CreateOrder`).
 - `request.id` — Unique request identifier.
 - Set MDC fields in interceptors at request entry; clear on request completion.
 

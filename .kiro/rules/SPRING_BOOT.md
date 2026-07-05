@@ -23,15 +23,15 @@ rather than restating them:
   `@RequiredArgsConstructor` for classes whose dependencies are all `final`.
 - Business logic lives in `@Service` beans; gRPC service classes (`@GrpcService`) are the transport
   layer and should stay thin — validate, delegate, map, respond.
-- Services depend on interfaces (`StorageService`, `MetadataService`, `ChecksumService`), never on
+- Services depend on interfaces (e.g., `PaymentService`, `NotificationService`), never on
   concrete implementations. Use `@Qualifier` by name when multiple implementations exist.
 - Keep beans stateless (see `SOLID_PRINCIPLES.md`). Request-scoped state belongs in the gRPC
   `Context`, not in bean fields.
 
 ## Conditional & Auto-Configuration
 
-- Use `@ConditionalOnProperty` to select beans from configuration (as `StorageAutoConfiguration`
-  does for `filestore.storage.type`). Default to a safe, explicit backend.
+- Use `@ConditionalOnProperty` to select beans from configuration (e.g., choosing a storage
+  backend based on a property). Default to a safe, explicit backend.
 - Provide a sensible fallback with `@ConditionalOnMissingBean` when defining optional beans.
 - Keep conditional wiring in `@Configuration` classes, not scattered across `@Service` beans.
 
@@ -57,11 +57,11 @@ rather than restating them:
 ## Exception Handling (gRPC)
 
 - Do **not** add `@RestControllerAdvice` for the gRPC path — it does not apply. Map domain
-  exceptions to gRPC `Status` in the centralized `ExceptionHandlerInterceptor` (see `GRPC.md`).
+  exceptions to gRPC `Status` in a centralized exception-handling interceptor (see `GRPC.md`).
 - Never expose stack traces, class names, or internal messages in `Status` descriptions; log the
   full detail server-side once, at the interceptor, and return a generic message for `INTERNAL`.
-- Throw specific domain exceptions from services (`FileNotFoundException`,
-  `StorageQuotaExceededException`), never bare `RuntimeException` (see `EXCEPTIONS.md`).
+- Throw specific domain exceptions from services (e.g., `NotFoundException`,
+  `QuotaExceededException`), never bare `RuntimeException` (see `EXCEPTIONS.md`).
 - If a REST/actuator-adjacent endpoint is ever added, use a single `@RestControllerAdvice` there —
   see `REST_API.md`.
 

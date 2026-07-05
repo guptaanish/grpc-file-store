@@ -9,6 +9,18 @@
 
 ## Pagination
 
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Server
+    Client->>Server: ListItems(page_token="", page_size=25)
+    Server-->>Client: items[0..24], next_page_token="abc"
+    Client->>Server: ListItems(page_token="abc", page_size=25)
+    Server-->>Client: items[25..49], next_page_token="def"
+    Client->>Server: ListItems(page_token="def", page_size=25)
+    Server-->>Client: items[50..60], next_page_token=""
+```
+
 - All list/search endpoints **must** support pagination.
 - Use cursor-based pagination (`page_token` / `next_page_token`) for gRPC and large datasets.
 - Use offset-based pagination (`page` / `size`) only for REST APIs with small, stable datasets.
@@ -45,8 +57,8 @@
 
 ## Naming Conventions
 
-- **gRPC RPCs**: `VerbNoun` (e.g., `UploadFile`, `GetFileMetadata`, `ListFiles`).
-- **gRPC messages**: `NounVerb{Request|Response}` (e.g., `UploadFileRequest`).
+- **gRPC RPCs**: `VerbNoun` (e.g., `CreateOrder`, `GetUser`, `ListItems`).
+- **gRPC messages**: `NounVerb{Request|Response}` (e.g., `CreateOrderRequest`).
 - **REST endpoints**: Plural nouns for resources (`/files`, `/users`), verbs via HTTP methods.
 - **Fields**: `snake_case` in proto, consistent casing in REST (camelCase or snake_case — pick one).
 

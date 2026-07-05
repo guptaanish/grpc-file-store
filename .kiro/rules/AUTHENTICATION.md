@@ -19,6 +19,17 @@
 
 ## Authentication
 
+```mermaid
+graph LR
+    Client["gRPC Client"] --> Logging["Logging Interceptor<br/>(MDC setup)"]
+    Logging --> Auth["🔒 Auth Interceptor<br/>(validate token)"]
+    Auth -->|"Valid"| Validation["Validation"]
+    Auth -->|"Invalid"| Reject["UNAUTHENTICATED"]
+    Validation --> Metrics["Metrics"]
+    Metrics --> Handler["Exception Handler"]
+    Handler --> Service["Service Logic"]
+```
+
 - Authenticate every RPC except explicitly public ones (e.g., `grpc.health.v1.Health/Check`).
 - Enforce authentication in a dedicated `ServerInterceptor` placed **early** in the chain — before
   validation and business logic, after logging/MDC so failures are traced. Order today is
@@ -35,9 +46,8 @@
 
 - Authorize **after** authentication and **before** the operation executes; deny by default.
 - Map authorization failures to `PERMISSION_DENIED` (distinct from `UNAUTHENTICATED`).
-- Enforce resource-level ownership checks for file operations (`DownloadFile`, `DeleteFile`,
-  `GetFileMetadata`, `CopyFile`, `MoveFile`) — a caller must not access another principal's files
-  by guessing a `file_id`. UUID keys reduce enumeration risk but are not an access control.
+- Enforce resource-level ownership checks for mutating or sensitive operations — a caller must not access another principal's resources
+  by guessing a resource ID. UUID keys reduce enumeration risk but are not an access control.
 - Centralize authorization policy; do not scatter ad-hoc role checks through service methods.
 - Add the principal/subject to MDC (non-PII identifier) for audit correlation, and emit an
   audit log for security-relevant actions (delete, move, permission denials).

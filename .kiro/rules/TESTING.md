@@ -19,7 +19,7 @@
 - Coverage is measured with **JaCoCo** (`./gradlew test` finalizes with `jacocoTestReport`; the
   `coverageMap` task produces per-test → production-class mapping).
 - Treat coverage as a floor, not a goal: aim for **≥ 80% line** and **≥ 70% branch** coverage on
-  `com.example.filestore.*`, allowing pragmatic exclusions for generated code (proto stubs, MapStruct
+  application source packages, allowing pragmatic exclusions for generated code (proto stubs, MapStruct
   impls) and trivial getters.
 - Prefer enforcing the floor with a `jacocoTestCoverageVerification` rule wired into `check` so
   regressions fail the build, rather than relying on manual report review.

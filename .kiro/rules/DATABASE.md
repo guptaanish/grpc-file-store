@@ -17,6 +17,17 @@
 
 ## Transaction Boundaries
 
+```mermaid
+graph TD
+    Controller["gRPC Service / Controller<br/>(no @Transactional)"] --> Service["@Service<br/>@Transactional"]
+    Service --> Repo1["Repository A"]
+    Service --> Repo2["Repository B"]
+    Repo1 --> DB["Database"]
+    Repo2 --> DB
+
+    style Service fill:#e1f5fe
+```
+
 - Use `@Transactional` at the service layer, not the repository or controller layer.
 - Use `@Transactional(readOnly = true)` for read-only operations to enable optimizations.
 - Keep transactions short — no external service calls inside a transaction.
