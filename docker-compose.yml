@@ -1,0 +1,38 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: grpc-file-store-app
+    ports:
+      - "8080:8080"
+      - "9090:9090"
+    volumes:
+      - file-store-data:/app/file-store-data
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - FILESTORE_STORAGE_LOCAL_DIRECTORY=/app/file-store-data
+      - FILESTORE_CORS_ALLOWED-ORIGINS=http://localhost:8080,http://localhost:5173
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+    restart: unless-stopped
+
+  envoy:
+    image: envoyproxy/envoy:v1.31-latest
+    container_name: grpc-file-store-envoy
+    ports:
+      - "8081:8081"
+      - "9901:9901"
+    volumes:
+      - ./envoy/envoy.yaml:/etc/envoy/envoy.yaml:ro
+    depends_on:
+      app:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  file-store-data:

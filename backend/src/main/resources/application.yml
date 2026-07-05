@@ -11,6 +11,9 @@ filestore:
   ttl:
     enabled: false
     retention-days: 30
+  cors:
+    allowed-origins:
+      - http://localhost:5173
 
 grpc:
   server:
@@ -22,6 +25,10 @@ spring:
   threads:
     virtual:
       enabled: true
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 110MB
   datasource:
     url: jdbc:h2:mem:filestore
     driver-class-name: org.h2.Driver

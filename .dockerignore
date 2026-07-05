@@ -1,0 +1,9 @@
+.git
+.idea
+.kiro
+backend/.gradle
+backend/build
+backend/file-store-data
+frontend/node_modules
+frontend/dist
+*.md
