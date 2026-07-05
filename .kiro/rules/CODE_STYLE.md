@@ -34,3 +34,12 @@
 - After **every** code change, review and update **all** `*.md` files to reflect the current state.
 - **MANDATORY**: Verify that **no stale references** exist to classes, packages, methods, files, or features that have been deleted, moved, or renamed.
 - Use project-wide search to identify and update all references when moving or renaming code components.
+
+## Diagrams in Markdown
+
+- **Always use Mermaid** for diagrams in `.md` files (architecture, flow, sequence, class, ER diagrams).
+- Do **not** use ASCII box-drawing characters (`┌`, `─`, `│`, `└`, `▼`, etc.) for architectural or flow diagrams.
+- File/directory tree listings may remain as indented code blocks (these are not diagrams).
+- Prefer `graph TD` (top-down) for layered architectures and `graph LR` (left-right) for request flows.
+- Use `subgraph` to group related components (e.g., interceptors, service layer, data layer).
+- Keep Mermaid diagrams readable: avoid more than 15 nodes in a single diagram; split into multiple if needed.
