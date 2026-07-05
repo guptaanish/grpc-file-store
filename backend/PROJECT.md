@@ -99,6 +99,19 @@ graph TD
 | Upload buffering | Temp file on disk (constant memory regardless of file size) |
 | Quota calculation | Single aggregate SQL query (`SUM(size)`) — O(1) memory |
 
+#### Resumable Upload Lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> Initiated : InitiateResumableUpload
+    Initiated --> InProgress : First chunk received
+    InProgress --> InProgress : Append chunk
+    InProgress --> Completed : All bytes received
+    InProgress --> Failed : Error / timeout
+    Completed --> [*]
+    Failed --> InProgress : Resume from offset
+```
+
 ### Observability
 
 | Concern | Implementation |
@@ -131,6 +144,10 @@ graph TD
 
 ## Error Handling
 
+> [!NOTE]
+> All exceptions are caught at the interceptor layer — service code throws domain exceptions, and the
+> `ExceptionHandlerInterceptor` maps them to gRPC status codes. Controllers/services never return gRPC statuses directly.
+
 Exceptions are mapped to gRPC status codes via `ExceptionHandlerInterceptor`:
 
 | Exception | gRPC Status |
@@ -143,29 +160,30 @@ Exceptions are mapped to gRPC status codes via `ExceptionHandlerInterceptor`:
 
 ## Data Model
 
-### FileEntity
+```mermaid
+erDiagram
+    FileEntity {
+        UUID id PK "Auto-generated"
+        VARCHAR filename "Original filename (512)"
+        VARCHAR content_type "MIME type (255)"
+        INT current_version "Latest version number"
+        TIMESTAMP created_at "First upload time"
+        TIMESTAMP updated_at "Last modification"
+        BOOLEAN deleted "Soft-delete flag"
+    }
 
-| Column | Type | Notes |
-|--------|------|-------|
-| `id` | UUID (PK) | Auto-generated |
-| `filename` | VARCHAR(512) | Original filename |
-| `content_type` | VARCHAR(255) | MIME type |
-| `current_version` | INT | Latest version number |
-| `created_at` | TIMESTAMP | First upload time |
-| `updated_at` | TIMESTAMP | Last modification |
-| `deleted` | BOOLEAN | Soft-delete flag |
+    FileVersionEntity {
+        UUID id PK "Auto-generated"
+        UUID file_id FK "References FileEntity"
+        INT version "Version number"
+        VARCHAR storage_path "Path on disk (1024)"
+        BIGINT size "File size in bytes"
+        VARCHAR checksum "SHA-256 hex digest (64)"
+        TIMESTAMP created_at "Upload time for this version"
+    }
 
-### FileVersionEntity
-
-| Column | Type | Notes |
-|--------|------|-------|
-| `id` | UUID (PK) | Auto-generated |
-| `file_id` | UUID (FK) | References FileEntity |
-| `version` | INT | Version number |
-| `storage_path` | VARCHAR(1024) | Path on disk |
-| `size` | BIGINT | File size in bytes |
-| `checksum` | VARCHAR(64) | SHA-256 hex digest |
-| `created_at` | TIMESTAMP | Upload time for this version |
+    FileEntity ||--o{ FileVersionEntity : "has versions"
+```
 
 ## Filesystem Layout
 

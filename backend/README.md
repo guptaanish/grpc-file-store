@@ -20,6 +20,9 @@ A Spring Boot application exposing a gRPC API for file storage with streaming up
 | HTTP actuator | `8080/actuator/health` | Health checks |
 | H2 console | `8080/h2-console` | Database browser |
 
+> [!WARNING]
+> H2 is an in-memory database — all data is lost on restart. This is intended for development only.
+
 ## Testing
 
 ```bash
@@ -53,6 +56,9 @@ A Spring Boot application exposing a gRPC API for file storage with streaming up
 | `Health/Check` | Unary | gRPC standard health check (grpc.health.v1) |
 
 ## Testing with grpcurl
+
+> [!NOTE]
+> gRPC reflection is enabled for local development, allowing `grpcurl` to discover services without proto files.
 
 ```bash
 # List services (reflection enabled)

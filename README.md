@@ -70,6 +70,10 @@ gRPC-Web does not support **client-streaming** RPCs. Since file upload requires 
 - **gRPC-Web** (via Envoy) for 9 unary/server-streaming RPCs
 - **REST endpoints** on the existing backend for uploads and downloads
 
+> [!IMPORTANT]
+> The `UploadFile` and `ResumeUpload` RPCs use client-streaming which is not supported by gRPC-Web.
+> These operations use REST endpoints instead (`/api/v1/files/upload`).
+
 ## Frontend
 
 | Tech | Purpose |
@@ -97,6 +101,18 @@ pnpm generate
 ```
 
 ## Backend REST API (for Frontend)
+
+```mermaid
+sequenceDiagram
+    participant Browser
+    participant Backend as Spring Boot :8080
+    participant Storage as File Storage
+
+    Browser->>Backend: POST /api/v1/files/upload (multipart)
+    Backend->>Backend: Compute SHA-256 checksum
+    Backend->>Storage: Store file (deduplicated)
+    Backend-->>Browser: 201 {fileId, checksum, version}
+```
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
@@ -160,6 +176,10 @@ docker compose up envoy
 # Terminal 3: Frontend
 cd frontend && pnpm dev
 ```
+
+> [!TIP]
+> Use `./scripts/start-all.sh` to build and run everything in Docker with a single command.
+> The frontend is served from Spring Boot at `http://localhost:8080`.
 
 ### Backend Tests
 
