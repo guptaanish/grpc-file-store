@@ -7,6 +7,7 @@
   - `@param` tag for every parameter.
   - `@return` tag for every non-void method.
   - `@throws` tag for every checked exception declared in the method signature.
+- All `@param`, `@return`, and `@throws` tag descriptions **must** end with a period (`.`).
 - Private methods may use concise single-line Javadoc but must still include `@param`/`@return`/`@throws` where applicable.
 - Test methods with descriptive names do not require Javadoc.
 
