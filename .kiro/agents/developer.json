@@ -2,72 +2,7 @@
   "name": "developer",
   "description": "Full-stack development agent with write access, builds, and testing capabilities",
   "prompt": "You are a Spring Boot and Java expert. The project uses Java 21 (records, pattern matching, virtual threads), Spring Boot, and Gradle. Focus on clean architecture, SOLID principles, and thorough testing. Follow the steering rules in ~/.kiro/steering/ for Javadoc, concurrency, security, and code style.",
-  "tools": [
-    "read",
-    "write",
-    "shell",
-    "grep",
-    "glob",
-    "code",
-    "knowledge",
-    "subagent",
-    "todo_list",
-    "web_search",
-    "web_fetch"
-  ],
-  "allowedTools": [
-    "read",
-    "grep",
-    "glob",
-    "code",
-    "knowledge"
-  ],
-  "toolsSettings": {
-    "write": {
-      "allowedPaths": [
-        "src/**",
-        "build.gradle.kts",
-        "settings.gradle.kts",
-        "gradle/**",
-        "*.md",
-        ".kiro/**"
-      ],
-      "deniedPaths": [
-        "build/**",
-        ".gradle/**"
-      ]
-    },
-    "shell": {
-      "allowedCommands": [
-        "./gradlew build",
-        "./gradlew test",
-        "./gradlew check",
-        "./gradlew format",
-        "./gradlew spotlessCheck",
-        "./gradlew bootRun",
-        "./gradlew clean",
-        "./gradlew dependencies",
-        "git status",
-        "git diff.*",
-        "git log.*",
-        "git branch.*"
-      ],
-      "autoAllowReadonly": true
-    }
-  },
-  "resources": [
-    "file://src/main/proto/**/*.proto",
-    "file://src/main/resources/application.yml",
-    "file://build.gradle.kts",
-    "file://README.md"
-  ],
-  "hooks": {
-    "agentSpawn": [
-      {
-        "command": "java --version 2>&1 | head -1"
-      }
-    ]
-  },
+  "tools": ["*"],
   "keyboardShortcut": "ctrl+shift+d",
   "welcomeMessage": "Ready to develop. What would you like to build or fix?"
 }
