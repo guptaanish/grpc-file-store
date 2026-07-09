@@ -1,5 +1,7 @@
 # PROJECT.md — gRPC File Store
 
+See [README.md](../README.md) for build instructions and quick start guide.
+
 ## Technology Stack
 
 | Layer | Technology | Version |
@@ -87,6 +89,12 @@ graph TD
 
 ### Concurrency
 
+> [!IMPORTANT]
+> Proper lock ordering is critical to prevent deadlocks. Always acquire locks in the same order:
+> 1. ChecksumLockManager (for deduplication/reclamation)
+> 2. FilenameLockManager (for file creation)
+> 3. FileLockManager (for read/write operations)
+
 | Resource | Mechanism |
 |----------|-----------|
 | gRPC requests | Virtual threads (Project Loom) |
@@ -127,6 +135,9 @@ stateDiagram-v2
 
 ### MDC Fields
 
+<details>
+<summary>Complete MDC Context Schema</summary>
+
 | Key | Set By | Description |
 |-----|--------|-------------|
 | `request-id` | Interceptor | UUID per RPC call |
@@ -141,6 +152,8 @@ stateDiagram-v2
 | `version` | Service | File version accessed/created |
 | `session-id` | Service | Upload session identifier |
 | `bytes-transferred` | Service | Total bytes uploaded/downloaded |
+
+</details>
 
 ## Error Handling
 
@@ -159,6 +172,10 @@ Exceptions are mapped to gRPC status codes via `ExceptionHandlerInterceptor`:
 | Any other `RuntimeException` | `INTERNAL` |
 
 ## Data Model
+
+> [!WARNING]
+> H2 in-memory database means the schema and all data are recreated on every application restart. 
+> All uploaded files and metadata are lost when the backend shuts down.
 
 ```mermaid
 erDiagram
@@ -187,6 +204,9 @@ erDiagram
 
 ## Filesystem Layout
 
+<details>
+<summary>Project Structure</summary>
+
 ```
 ./file-store-data/
   └── {file-id}/
@@ -194,6 +214,8 @@ erDiagram
       ├── v2_{filename}.dat
       └── v3_{filename}.dat
 ```
+
+</details>
 
 ## Current State
 
@@ -212,6 +234,10 @@ erDiagram
 - [x] gRPC interceptor chain (logging, validation, metrics, exception handling)
 - [x] MDC context with 12 fields
 - [x] Virtual threads enabled
+
+> [!TIP]
+> Virtual threads (Project Loom) require Java 21+. This enables high-concurrency I/O operations with minimal thread overhead.
+
 - [x] Per-file ReadWriteLock concurrency
 - [x] gRPC reflection enabled
 - [x] Dual health endpoints (gRPC + Actuator)

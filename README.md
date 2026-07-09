@@ -6,9 +6,9 @@ A file storage service with a gRPC backend and a Material UI web frontend.
 
 ```
 grpc-file-store/
-├── backend/       # Spring Boot gRPC service (Java 21, Gradle)
-├── frontend/      # React + MUI + gRPC-Web frontend (Vite, TypeScript)
-├── envoy/         # Envoy proxy config (gRPC-Web → gRPC translation)
+├── [backend/](./backend/)       # Spring Boot gRPC service (Java 21, Gradle)
+├── [frontend/](./frontend/)     # React + MUI + gRPC-Web frontend (Vite, TypeScript)
+├── [envoy/](./envoy/)           # Envoy proxy config (gRPC-Web → gRPC translation)
 ├── docker-compose.yml  # Local dev orchestration
 ├── buf.yaml       # Protobuf module definition
 └── buf.gen.yaml   # TypeScript code generation config
@@ -33,6 +33,9 @@ Backend starts on:
 - **gRPC**: `localhost:9090`
 - **REST API**: `localhost:8080` (uploads/downloads)
 - **H2 Console**: `localhost:8080/h2-console`
+
+> [!WARNING]
+> The H2 database is in-memory only. All data is lost when the backend restarts.
 
 ### 2. Start Envoy Proxy
 
@@ -95,6 +98,9 @@ gRPC-Web does not support **client-streaming** RPCs. Since file upload requires 
 
 ### Regenerating Proto Stubs
 
+> [!NOTE]
+> This requires the buf CLI to be installed. Install it from [https://buf.build/docs/installation](https://buf.build/docs/installation).
+
 ```bash
 cd frontend
 pnpm generate
@@ -141,7 +147,7 @@ sequenceDiagram
 
 ### Envoy
 
-- Config: `envoy/envoy.yaml`
+- Config: [`envoy/envoy.yaml`](./envoy/envoy.yaml)
 - Listens: `localhost:8081` (gRPC-Web proxy)
 - Admin: `localhost:9901`
 - Upstream: `host.docker.internal:9090` (gRPC server)
@@ -166,6 +172,9 @@ filestore:
 
 ### Run Everything
 
+<details>
+<summary>Multi-terminal setup commands</summary>
+
 ```bash
 # Terminal 1: Backend
 cd backend && ./gradlew bootRun
@@ -176,6 +185,8 @@ docker compose up envoy
 # Terminal 3: Frontend
 cd frontend && pnpm dev
 ```
+
+</details>
 
 > [!TIP]
 > Use `./scripts/start-all.sh` to build and run everything in Docker with a single command.
@@ -188,6 +199,8 @@ cd backend
 ./gradlew test        # 47 tests
 ./gradlew format      # Auto-format code
 ```
+
+See [backend/README.md](./backend/README.md) and [backend/PROJECT.md](./backend/PROJECT.md) for more details.
 
 ### Frontend Build
 

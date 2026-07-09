@@ -2,6 +2,8 @@
 
 A Spring Boot application exposing a gRPC API for file storage with streaming upload/download, versioning, and search.
 
+See [PROJECT.md](./PROJECT.md) for architecture details and design decisions.
+
 ## Prerequisites
 
 - **Java 21** (Corretto, Temurin, or any OpenJDK distribution)
@@ -19,6 +21,9 @@ A Spring Boot application exposing a gRPC API for file storage with streaming up
 | gRPC server | `9090` | File store API |
 | HTTP actuator | `8080/actuator/health` | Health checks |
 | H2 console | `8080/h2-console` | Database browser |
+
+> [!TIP]
+> Use `./gradlew bootRun --args="--spring.profiles.active=dev"` to run with development profile settings.
 
 > [!WARNING]
 > H2 is an in-memory database — all data is lost on restart. This is intended for development only.
@@ -60,6 +65,9 @@ A Spring Boot application exposing a gRPC API for file storage with streaming up
 > [!NOTE]
 > gRPC reflection is enabled for local development, allowing `grpcurl` to discover services without proto files.
 
+<details>
+<summary>grpcurl Examples</summary>
+
 ```bash
 # List services (reflection enabled)
 grpcurl -plaintext localhost:9090 list
@@ -88,9 +96,14 @@ grpcurl -plaintext -d '{"file_id": "<uuid>"}' \
 grpcurl -plaintext localhost:9090 grpc.health.v1.Health/Check
 ```
 
+</details>
+
 ## Configuration
 
 Key properties in `application.yml`:
+
+> [!CAUTION]
+> The H2 database is configured as in-memory — all data is lost on application restart. This is expected behavior for development environments.
 
 | Property | Default | Description |
 |----------|---------|-------------|
@@ -108,6 +121,9 @@ Key properties in `application.yml`:
 | `filestore.ttl.retention-days` | `30` | Days to retain files before auto-deletion |
 
 ## Project Structure
+
+<details>
+<summary>Directory Tree</summary>
 
 ```
 src/main/java/com/example/filestore/
@@ -170,3 +186,5 @@ src/main/java/com/example/filestore/
     ├── FileStoreGrpcService.java            # gRPC service implementation
     └── HealthCheckService.java              # grpc.health.v1.Health
 ```
+
+</details>
