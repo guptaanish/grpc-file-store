@@ -43,7 +43,73 @@
 - ` ```mermaid ` — Diagrams (see Mermaid rules below).
 - ` ```math ` — Block-level LaTeX equations.
 - ` ```geojson ` / ` ```topojson ` — Only if documenting geographic data or location-based features.
+- ` ```stl ` — 3D model rendering for hardware or spatial documentation.
 - Standard language blocks (` ```java`, ` ```sql`, ` ```yaml`, etc.) — Always specify the language identifier.
+
+### Footnotes
+
+- Use footnotes (`[^1]`) for supplementary information that would interrupt the main flow.
+- Define footnote content at the bottom of the section or document: `[^1]: Explanation text`.
+- Use for: citations, version-specific caveats, links to external specs, tangential clarifications.
+- Do NOT use footnotes for critical information the reader must see — use callouts instead.
+
+### Collapsed Sections
+
+- Use `<details><summary>Title</summary>content</details>` for optional, verbose, or reference content.
+- Good candidates: full configuration examples, verbose CLI output, migration guides, raw data samples.
+- Always provide a descriptive `<summary>` so readers know whether to expand.
+- Do NOT collapse critical instructions or prerequisites — those must be visible by default.
+
+### Auto-linked References
+
+- Use `#123` to reference GitHub issues/PRs — GitHub auto-links these in rendered markdown.
+- Use `@username` for mentions in PR descriptions and issue comments.
+- Commit SHA hashes (7+ characters) auto-link to the commit view.
+- Use these for traceability in changelogs, PR descriptions, and commit bodies.
+
+### Emoji Shortcodes
+
+- Use emoji shortcodes (`:rocket:`, `:warning:`, `:white_check_mark:`) sparingly for visual scanning in tables and lists.
+- Acceptable in: status tables, changelog entries, feature lists, PR templates.
+- Do NOT overuse — plain text is preferred for technical prose. One or two per section maximum.
+
+### Color Chips
+
+- Use inline code with hex values (`` `#ff0000` ``) when documenting theme colors, design tokens, or UI configuration.
+- GitHub renders these as color swatches in certain contexts (issues, PRs).
+
+### Relative Links
+
+- Use relative links (`[doc](./path/to/file.md)`) for cross-references within the repository.
+- Prefer relative over absolute links so documentation works across forks and branches.
+- Link to specific headings with anchors: `[section](./FILE.md#heading-name)`.
+- Verify relative links still resolve after file moves or renames.
+
+### Image Sizing
+
+- Use HTML `<img>` tags when image sizing is needed: `<img src="url" width="200">`.
+- Prefer standard markdown `![alt](url)` when no sizing control is required.
+- Always include meaningful `alt` text for accessibility.
+- Store project images in a `docs/images/` directory; reference with relative paths.
+
+### Use Appropriate Features
+
+- **Always use the richest applicable markdown feature** for the content being documented:
+
+| Content Type | Preferred Feature |
+|-------------|-------------------|
+| Critical warnings or tips | Alerts (`> [!WARNING]`, `> [!TIP]`) |
+| Architecture or flow visualization | Mermaid diagrams |
+| Complexity or formulas | Math (`$O(n)$`, ` ```math `) |
+| Optional verbose examples | Collapsed sections (`<details>`) |
+| Supplementary references | Footnotes (`[^1]`) |
+| Status or feature lists | Emoji shortcodes (`:white_check_mark:`) |
+| Cross-repo file references | Relative links (`./path/to/file.md`) |
+| Issue/PR traceability | Auto-linked references (`#123`) |
+| Geographic data | GeoJSON/TopoJSON blocks |
+| 3D model documentation | STL blocks |
+| Color/theme documentation | Color chips (`` `#hex` ``) |
+| Images needing size control | HTML `<img>` with `width`/`height` |
 
 ## Diagrams in Markdown
 
