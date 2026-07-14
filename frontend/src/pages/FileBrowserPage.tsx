@@ -198,8 +198,13 @@ export default function FileBrowserPage() {
 
   return (
     <Box>
+      {/* Page Header */}
+      <Typography variant="h5" sx={{ color: "#ffffff", mb: 2, fontWeight: 500 }}>
+        File Browser
+      </Typography>
+
       {/* Search Bar */}
-      <Paper sx={{ p: 2, mb: 2 }}>
+      <Box sx={{ mb: 2 }}>
         <TextField
           fullWidth
           placeholder="Search files by name..."
@@ -209,12 +214,12 @@ export default function FileBrowserPage() {
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <SearchIcon />
+                <SearchIcon sx={{ color: "#6c7293" }} />
               </InputAdornment>
             ),
             endAdornment: (
               <InputAdornment position="end">
-                <IconButton onClick={handleSearch} edge="end">
+                <IconButton onClick={handleSearch} edge="end" sx={{ color: "#6c7293" }}>
                   <SearchIcon />
                 </IconButton>
               </InputAdornment>
@@ -222,12 +227,12 @@ export default function FileBrowserPage() {
           }}
           size="small"
         />
-      </Paper>
+      </Box>
 
       {/* Error Display */}
       {error && (
-        <Paper sx={{ p: 2, mb: 2, bgcolor: "error.light", color: "error.contrastText" }}>
-          <Typography>Error loading files: {error.message}</Typography>
+        <Paper sx={{ p: 2, mb: 2, bgcolor: "rgba(252, 66, 74, 0.1)", border: "1px solid #fc424a" }}>
+          <Typography sx={{ color: "#fc424a" }}>Error loading files: {error.message}</Typography>
         </Paper>
       )}
 
@@ -241,8 +246,16 @@ export default function FileBrowserPage() {
           disableRowSelectionOnClick
           hideFooter
           sx={{
+            border: "none",
             "& .MuiDataGrid-row:hover": {
               cursor: "pointer",
+              backgroundColor: "rgba(255, 255, 255, 0.03)",
+            },
+            "& .MuiDataGrid-cell": {
+              borderColor: "#2c2e33",
+            },
+            "& .MuiDataGrid-columnHeaders": {
+              borderColor: "#2c2e33",
             },
           }}
         />
@@ -250,13 +263,14 @@ export default function FileBrowserPage() {
 
       {/* Pagination Controls */}
       <Box sx={{ display: "flex", justifyContent: "flex-end", alignItems: "center", mt: 1, gap: 1 }}>
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" sx={{ color: "#6c7293" }}>
           Page {pageHistory.length}
         </Typography>
         <IconButton
           onClick={handlePrevPage}
           disabled={pageHistory.length <= 1}
           size="small"
+          sx={{ color: "#6c7293" }}
         >
           <NavigateBeforeIcon />
         </IconButton>
@@ -264,6 +278,7 @@ export default function FileBrowserPage() {
           onClick={handleNextPage}
           disabled={!data?.nextPageToken}
           size="small"
+          sx={{ color: "#6c7293" }}
         >
           <NavigateNextIcon />
         </IconButton>

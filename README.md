@@ -82,7 +82,7 @@ gRPC-Web does not support **client-streaming** RPCs. Since file upload requires 
 | Tech | Purpose |
 |------|---------|
 | React 19 | UI framework |
-| MUI v6 | Component library (Material Design, blue theme) |
+| MUI v6 | Component library (Corona-inspired dark admin theme, Rubik font) |
 | MUI X DataGrid | File listing with columns, sorting |
 | TanStack Query | Server state management, caching, pagination |
 | Connect-ES v2 | Type-safe gRPC-Web client from proto stubs |

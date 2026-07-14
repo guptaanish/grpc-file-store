@@ -128,7 +128,7 @@ export default function UploadPage() {
 
   return (
     <Box>
-      <Typography variant="h5" gutterBottom>
+      <Typography variant="h5" sx={{ color: "#ffffff", mb: 1, fontWeight: 500 }}>
         Upload File
       </Typography>
 
@@ -138,10 +138,11 @@ export default function UploadPage() {
             checked={resumable}
             onChange={(e) => setResumable(e.target.checked)}
             disabled={isUploading}
+            color="primary"
           />
         }
         label="Use resumable upload (for large files)"
-        sx={{ mb: 2 }}
+        sx={{ mb: 2, color: "#6c7293" }}
       />
 
       {/* Drop Zone */}
@@ -153,21 +154,21 @@ export default function UploadPage() {
           textAlign: "center",
           cursor: "pointer",
           border: "2px dashed",
-          borderColor: isDragActive ? "primary.main" : "grey.400",
-          bgcolor: isDragActive ? "action.hover" : "background.paper",
+          borderColor: isDragActive ? "#0090e7" : "#2c2e33",
+          bgcolor: isDragActive ? "rgba(0, 144, 231, 0.05)" : "#191c24",
           transition: "all 0.2s ease",
           "&:hover": {
-            borderColor: "primary.main",
-            bgcolor: "action.hover",
+            borderColor: "#0090e7",
+            bgcolor: "rgba(0, 144, 231, 0.05)",
           },
         }}
       >
         <input {...getInputProps()} />
-        <CloudUploadIcon sx={{ fontSize: 64, color: "primary.main", mb: 2 }} />
-        <Typography variant="h6" gutterBottom>
+        <CloudUploadIcon sx={{ fontSize: 64, color: "#0090e7", mb: 2 }} />
+        <Typography variant="h6" sx={{ color: "#ffffff" }} gutterBottom>
           {isDragActive ? "Drop the file here" : "Drag & drop a file here, or click to browse"}
         </Typography>
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" sx={{ color: "#6c7293" }}>
           Maximum file size: 100 MB
           {resumable && " • Using resumable upload (256 KB chunks)"}
         </Typography>
@@ -175,12 +176,23 @@ export default function UploadPage() {
 
       {/* Progress Bar */}
       {progress && !result && (
-        <Paper sx={{ p: 2, mb: 2 }}>
-          <Typography variant="body2" gutterBottom>
+        <Paper sx={{ p: 2, mb: 2, bgcolor: "#191c24" }}>
+          <Typography variant="body2" sx={{ color: "#ffffff" }} gutterBottom>
             Uploading... {progress.percent}%
           </Typography>
-          <LinearProgress variant="determinate" value={progress.percent} sx={{ height: 8, borderRadius: 4 }} />
-          <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+          <LinearProgress
+            variant="determinate"
+            value={progress.percent}
+            sx={{
+              height: 8,
+              borderRadius: 4,
+              backgroundColor: "#2f323a",
+              "& .MuiLinearProgress-bar": {
+                backgroundColor: "#0090e7",
+              },
+            }}
+          />
+          <Typography variant="caption" sx={{ color: "#6c7293", mt: 0.5 }}>
             {formatBytes(progress.loaded)} / {formatBytes(progress.total)}
           </Typography>
         </Paper>
@@ -188,36 +200,41 @@ export default function UploadPage() {
 
       {/* Error */}
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+        <Alert severity="error" sx={{ mb: 2, bgcolor: "rgba(252, 66, 74, 0.1)", color: "#fc424a" }} onClose={() => setError(null)}>
           {error}
         </Alert>
       )}
 
       {/* Success Result */}
       {result && (
-        <Card sx={{ bgcolor: "success.light" }}>
+        <Card sx={{ bgcolor: "rgba(0, 210, 91, 0.1)", border: "1px solid #00d25b" }}>
           <CardContent>
             <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-              <CheckCircleIcon color="success" />
-              <Typography variant="h6">Upload Complete</Typography>
+              <CheckCircleIcon sx={{ color: "#00d25b" }} />
+              <Typography variant="h6" sx={{ color: "#ffffff" }}>Upload Complete</Typography>
             </Stack>
             <Stack spacing={1}>
-              <Typography>
+              <Typography sx={{ color: "#ffffff" }}>
                 <strong>File:</strong> {result.filename}
               </Typography>
-              <Typography>
+              <Typography sx={{ color: "#ffffff" }}>
                 <strong>Size:</strong> {formatBytes(result.size)}
               </Typography>
-              <Typography>
+              <Typography sx={{ color: "#ffffff" }}>
                 <strong>Version:</strong> {result.version}
               </Typography>
               <Stack direction="row" spacing={1} alignItems="center">
-                <Typography>
+                <Typography sx={{ color: "#ffffff" }}>
                   <strong>Checksum:</strong>
                 </Typography>
-                <Chip label={result.checksum.slice(0, 16) + "..."} size="small" variant="outlined" />
+                <Chip
+                  label={result.checksum.slice(0, 16) + "..."}
+                  size="small"
+                  variant="outlined"
+                  sx={{ color: "#6c7293", borderColor: "#2c2e33" }}
+                />
               </Stack>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" sx={{ color: "#6c7293" }}>
                 File ID: {result.fileId}
               </Typography>
             </Stack>
