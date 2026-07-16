@@ -12,6 +12,7 @@ import {
 import FolderIcon from "@mui/icons-material/Folder";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import StorageIcon from "@mui/icons-material/Storage";
+import DashboardIcon from "@mui/icons-material/Dashboard";
 
 const SIDEBAR_WIDTH = 244;
 
@@ -22,6 +23,7 @@ export default function Sidebar() {
   const navItems = [
     { label: "File Browser", icon: <FolderIcon />, path: "/" },
     { label: "Upload", icon: <CloudUploadIcon />, path: "/upload" },
+    { label: "Dashboard", icon: <DashboardIcon />, path: "/dashboard" },
   ];
 
   return (

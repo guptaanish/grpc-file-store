@@ -1,15 +1,54 @@
+import { Suspense, lazy } from "react";
 import { Routes, Route } from "react-router-dom";
+import { Box, CircularProgress } from "@mui/material";
 import Layout from "./components/Layout";
-import FileBrowserPage from "./pages/FileBrowserPage";
-import UploadPage from "./pages/UploadPage";
+
+// Route-based code splitting: each page is a separate chunk so the initial
+// bundle stays small. The Dashboard template (charts, tree view, date pickers,
+// react-spring) is especially heavy and only loaded when its route is visited.
+const FileBrowserPage = lazy(() => import("./pages/FileBrowserPage"));
+const UploadPage = lazy(() => import("./pages/UploadPage"));
+const Dashboard = lazy(() => import("./dashboard-template/dashboard/Dashboard"));
+
+function RouteFallback() {
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        minHeight: "60vh",
+      }}
+    >
+      <CircularProgress />
+    </Box>
+  );
+}
 
 export default function App() {
   return (
-    <Layout>
+    <Suspense fallback={<RouteFallback />}>
       <Routes>
-        <Route path="/" element={<FileBrowserPage />} />
-        <Route path="/upload" element={<UploadPage />} />
+        {/* Standalone MUI dashboard template — renders its own theme + shell */}
+        <Route path="/dashboard" element={<Dashboard />} />
+        {/* App pages share the existing Corona layout */}
+        <Route
+          path="/"
+          element={
+            <Layout>
+              <FileBrowserPage />
+            </Layout>
+          }
+        />
+        <Route
+          path="/upload"
+          element={
+            <Layout>
+              <UploadPage />
+            </Layout>
+          }
+        />
       </Routes>
-    </Layout>
+    </Suspense>
   );
 }

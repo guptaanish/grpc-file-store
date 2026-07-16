@@ -9,7 +9,9 @@ grpc-file-store/
 ├── [backend/](./backend/)       # Spring Boot gRPC service (Java 21, Gradle)
 ├── [frontend/](./frontend/)     # React + MUI + gRPC-Web frontend (Vite, TypeScript)
 ├── [envoy/](./envoy/)           # Envoy proxy config (gRPC-Web → gRPC translation)
-├── docker-compose.yml  # Local dev orchestration
+├── [scripts/](./scripts/)       # Start/stop/restart helper scripts (Docker Compose)
+├── Dockerfile          # Multi-stage build (frontend build → backend runtime image)
+├── docker-compose.yml  # Local dev orchestration (app + envoy)
 ├── buf.yaml       # Protobuf module definition
 └── buf.gen.yaml   # TypeScript code generation config
 ```
@@ -84,6 +86,7 @@ gRPC-Web does not support **client-streaming** RPCs. Since file upload requires 
 | React 19 | UI framework |
 | MUI v6 | Component library (Corona-inspired dark admin theme, Rubik font) |
 | MUI X DataGrid | File listing with columns, sorting |
+| MUI X Charts / Tree View / Date Pickers | Dashboard template visualizations (v7) |
 | TanStack Query | Server state management, caching, pagination |
 | Connect-ES v2 | Type-safe gRPC-Web client from proto stubs |
 | react-dropzone | Drag-and-drop file upload |
@@ -95,6 +98,27 @@ gRPC-Web does not support **client-streaming** RPCs. Since file upload requires 
 
 - **File Browser** (`/`) — Search, paginated file list, row actions (download, copy, move, delete)
 - **Upload** (`/upload`) — Drag-drop zone, progress bar, simple & resumable upload modes
+- **Dashboard** (`/dashboard`) — MUI's free [Dashboard template](https://mui.com/material-ui/getting-started/templates/dashboard/) (charts, stat cards, data grid, tree view). Renders as a standalone page with its own theme and shell.
+
+### Dashboard Template
+
+The dashboard page is the official MUI **free** Dashboard template, vendored into
+[`src/dashboard-template/`](./frontend/src/dashboard-template/) (`dashboard/` + `shared-theme/`).
+
+> [!NOTE]
+> The template was copied from the `v6.4.0` git tag of `mui/material-ui` to match this project's
+> `@mui/material` v6 line — the `master` template targets Material UI v7 (unified `Grid`, `theme.vars`
+> on the base `Theme`) and will not compile against v6.
+
+Local adaptations applied to make it build under the project's strict `tsconfig`:
+
+- Enabled the `CssThemeVariables` module augmentation in
+  [`theme-augmentation.d.ts`](./frontend/src/dashboard-template/theme-augmentation.d.ts) so `theme.vars` types resolve.
+- Removed `@mui/x-data-grid-pro` / `@mui/x-date-pickers-pro` type-only augmentation imports (Pro packages are not used).
+- Stripped unused `React` namespace imports (`noUnusedLocals`).
+
+It brings in these pinned dependencies: `@mui/x-charts`, `@mui/x-tree-view`, `@mui/x-date-pickers`
+(all v7, matching `@mui/x-data-grid`), plus `dayjs`, `clsx`, and `@react-spring/web`.
 
 ### Regenerating Proto Stubs
 
@@ -191,6 +215,17 @@ cd frontend && pnpm dev
 > [!TIP]
 > Use `./scripts/start-all.sh` to build and run everything in Docker with a single command.
 > The frontend is served from Spring Boot at `http://localhost:8080`.
+
+Helper scripts in [`scripts/`](./scripts/):
+
+| Script | Purpose |
+|--------|---------|
+| `start-all.sh` | Build and start the full stack (app + Envoy) in Docker |
+| `restart-all.sh` | Rebuild and restart the full stack |
+| `stop-all.sh` | Stop and remove the Docker Compose stack |
+| `start-backend.sh` | Start the backend only (`./gradlew bootRun`) |
+| `start-frontend.sh` | Start the frontend dev server only |
+| `start-envoy.sh` | Start the Envoy proxy only |
 
 ### Backend Tests
 
