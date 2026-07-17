@@ -1,11 +1,8 @@
-import com.google.protobuf.gradle.*
-
 plugins {
     java
     jacoco
     id("org.springframework.boot") version "3.5.16"
     id("io.spring.dependency-management") version "1.1.7"
-    id("com.google.protobuf") version "0.9.6"
     id("com.diffplug.spotless") version "8.4.0"
 }
 
@@ -37,10 +34,10 @@ repositories {
     mavenCentral()
 }
 
-val protocVersion = "4.35.1"
 val grpcSpringBootVersion = "3.1.0.RELEASE"
 val mapstructVersion = "1.6.3"
 val logstashEncoderVersion = "8.0"
+val springdocVersion = "2.8.6"
 
 dependencies {
     // Spring Boot
@@ -49,19 +46,19 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-validation")
 
+    // OpenAPI / Swagger UI for the REST API (springdoc)
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:$springdocVersion")
+
     // gRPC Spring Boot Starter
     implementation("net.devh:grpc-spring-boot-starter:$grpcSpringBootVersion")
     implementation("net.devh:grpc-server-spring-boot-starter:$grpcSpringBootVersion")
 
-    // gRPC & Protobuf
-    implementation("io.grpc:grpc-protobuf:$grpcVersion")
-    implementation("io.grpc:grpc-stub:$grpcVersion")
-    implementation("io.grpc:grpc-services:$grpcVersion")
-    implementation("com.google.protobuf:protobuf-java:$protocVersion")
-    implementation("com.google.protobuf:protobuf-java-util:$protocVersion")
+    // Generated gRPC/Protobuf stubs (also published for service-to-service consumers).
+    // Brings grpc-protobuf, grpc-stub, and protobuf-java transitively (declared `api` there).
+    implementation(project(":stubs"))
 
-    // Jakarta annotation (for generated gRPC code)
-    implementation("jakarta.annotation:jakarta.annotation-api")
+    // gRPC services (health + reflection protos used by the server)
+    implementation("io.grpc:grpc-services:$grpcVersion")
 
     // Database
     runtimeOnly("com.h2database:h2")
@@ -89,24 +86,6 @@ dependencies {
 
     // JaCoCo runtime API for per-test coverage mapping
     testImplementation("org.jacoco:org.jacoco.core:0.8.15")
-}
-
-protobuf {
-    protoc {
-        artifact = "com.google.protobuf:protoc:$protocVersion"
-    }
-    plugins {
-        create("grpc") {
-            artifact = "io.grpc:protoc-gen-grpc-java:$grpcVersion"
-        }
-    }
-    generateProtoTasks {
-        all().forEach { task ->
-            task.plugins {
-                create("grpc")
-            }
-        }
-    }
 }
 
 tasks.withType<Test> {

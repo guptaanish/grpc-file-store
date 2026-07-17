@@ -18,6 +18,7 @@ See [README.md](../README.md) for build instructions and quick start guide.
 | Metrics | Micrometer | Spring Boot managed |
 | Logging | SLF4J + Logback + Logstash Encoder | 8.0 |
 | Web | Spring Boot Starter Web | Spring Boot managed |
+| API Docs (REST) | springdoc-openapi (Swagger UI) | 2.8.6 |
 | Lombok | Lombok | Spring Boot managed |
 | Formatting | Spotless | 8.4.0 |
 
@@ -240,6 +241,10 @@ erDiagram
 
 - [x] Per-file ReadWriteLock concurrency
 - [x] gRPC reflection enabled
+- [x] gRPC API documentation (static `protoc-gen-doc` HTML at `/grpc-docs.html` + grpcui for dev)
+- [x] REST API documentation (springdoc Swagger UI at `/swagger-ui.html`, OpenAPI at `/v3/api-docs`)
+- [x] Publishable gRPC stubs artifact (`:stubs` Gradle module → Maven) for service-to-service integration
+- [x] Startup banner logging key endpoints (incl. API docs URL)
 - [x] Dual health endpoints (gRPC + Actuator)
 - [x] Periodic heartbeat logging (configurable interval)
 - [x] Structured JSON logging (prod profile)

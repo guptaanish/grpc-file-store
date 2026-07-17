@@ -34,10 +34,13 @@ public class WebStaticResourceConfiguration implements WebMvcConfigurer {
 
         @Override
         protected Resource getResource(String resourcePath, Resource location) throws IOException {
-            // Never intercept API, actuator, or H2 console paths
+            // Never intercept API, actuator, H2 console, or Swagger/OpenAPI paths
             if (resourcePath.startsWith("api/")
                     || resourcePath.startsWith("actuator/")
-                    || resourcePath.startsWith("h2-console")) {
+                    || resourcePath.startsWith("h2-console")
+                    || resourcePath.startsWith("swagger-ui")
+                    || resourcePath.startsWith("v3/api-docs")
+                    || resourcePath.startsWith("webjars/")) {
                 return null;
             }
 

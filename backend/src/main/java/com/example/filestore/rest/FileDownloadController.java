@@ -6,6 +6,10 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -32,6 +36,7 @@ import com.example.filestore.service.StorageService;
 @RestController
 @RequestMapping("/api/v1/files")
 @RequiredArgsConstructor
+@Tag(name = "File Download", description = "File download endpoint with browser save-as (Content-Disposition).")
 public class FileDownloadController {
 
     /**
@@ -57,6 +62,15 @@ public class FileDownloadController {
      * @return the file content as an attachment stream.
      */
     @GetMapping("/{fileId}/download")
+    @Operation(
+            summary = "Download a file",
+            description = "Streams a file by ID and optional version as an attachment (browser save-as). "
+                    + "Use version 0 or omit for the latest version.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "File content streamed as an attachment."),
+        @ApiResponse(responseCode = "400", description = "Malformed file ID."),
+        @ApiResponse(responseCode = "404", description = "File or version not found.")
+    })
     public ResponseEntity<InputStreamResource> downloadFile(
             @PathVariable("fileId") String fileId,
             @RequestParam(value = "version", defaultValue = "0") int version) {

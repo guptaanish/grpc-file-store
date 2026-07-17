@@ -7,7 +7,7 @@ RUN corepack enable && corepack prepare pnpm@9.15.4 --activate && pnpm install -
 
 COPY frontend/ ./
 COPY buf.yaml buf.gen.yaml /app/
-COPY backend/src/main/proto /app/backend/src/main/proto
+COPY backend/stubs/src/main/proto /app/backend/stubs/src/main/proto
 RUN cd /app && npx --prefix frontend buf generate
 RUN pnpm build
 
@@ -17,6 +17,8 @@ FROM eclipse-temurin:21-jdk AS backend-build
 WORKDIR /app/backend
 COPY backend/gradle/ gradle/
 COPY backend/gradlew backend/build.gradle.kts backend/settings.gradle.kts backend/gradle.properties ./
+# Stubs subproject (build script + proto) — required to configure the multi-module build
+COPY backend/stubs/ stubs/
 RUN ./gradlew dependencies --no-daemon || true
 
 COPY backend/src/ src/

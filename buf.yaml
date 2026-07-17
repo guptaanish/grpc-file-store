@@ -1,5 +1,5 @@
 version: v2
 modules:
-  - path: backend/src/main/proto
+  - path: backend/stubs/src/main/proto
 deps:
   - buf.build/protocolbuffers/wellknowntypes

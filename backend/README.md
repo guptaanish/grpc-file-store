@@ -4,6 +4,18 @@ A Spring Boot application exposing a gRPC API for file storage with streaming up
 
 See [PROJECT.md](./PROJECT.md) for architecture details and design decisions.
 
+## Modules
+
+This is a multi-module Gradle build:
+
+| Module | Purpose |
+|--------|---------|
+| _(root)_ | The Spring Boot gRPC/REST application. |
+| `stubs` | Generated Protobuf + gRPC Java stubs (the `.proto` lives in `stubs/src/main/proto`). Published as `com.example:grpc-file-store-stubs` for service-to-service consumers; the app depends on it via `implementation(project(":stubs"))`. |
+
+Publish the stubs to the local Maven repo with `./gradlew :stubs:publishToMavenLocal`
+(or `../scripts/publish-stubs.sh`). See the root README's "Service-to-Service Integration" section.
+
 ## Prerequisites
 
 - **Java 21** (Corretto, Temurin, or any OpenJDK distribution)
@@ -98,6 +110,22 @@ grpcurl -plaintext localhost:9090 grpc.health.v1.Health/Check
 
 </details>
 
+## API Documentation
+
+The startup banner prints the key endpoints, including the Swagger UI and gRPC API docs URLs.
+
+- **REST API (Swagger UI)** — springdoc-openapi serves interactive docs for the HTTP endpoints
+  (upload/download) at `http://localhost:8080/swagger-ui.html`; the raw OpenAPI spec is at
+  `http://localhost:8080/v3/api-docs`. This is the surface the browser UI consumes.
+- **gRPC API — static HTML reference** — generated from the proto (buf + `protoc-gen-doc`) and served
+  at `http://localhost:8080/grpc-docs.html`. Regenerated with `pnpm generate` from `frontend/`.
+- **gRPC API — interactive UI (dev)** — `./scripts/grpc-ui.sh` launches [grpcui](https://github.com/fullstorydev/grpcui)
+  (Swagger-UI-like) at `http://localhost:8082`, backed by gRPC reflection.
+
+> [!IMPORTANT]
+> gRPC reflection is enabled only for local development. Keep it disabled in production and rely on
+> the static HTML reference for published docs.
+
 ## Configuration
 
 Key properties in `application.yml`:
@@ -134,7 +162,9 @@ src/main/java/com/example/filestore/
 │   ├── StorageType.java                     # Enum: LOCAL, S3, GCS
 │   ├── StorageAutoConfiguration.java        # @ConditionalOnProperty bean factory
 │   ├── WebCorsConfiguration.java            # CORS configuration for frontend
-│   └── WebStaticResourceConfiguration.java  # SPA static resource fallback
+│   ├── WebStaticResourceConfiguration.java  # SPA static resource fallback
+│   ├── OpenApiConfig.java                   # OpenAPI/Swagger metadata for the REST API
+│   └── StartupInfoLogger.java               # Logs endpoint banner (incl. API docs URL) on startup
 ├── rest/
 │   ├── FileUploadController.java            # REST multipart + resumable upload
 │   ├── FileDownloadController.java          # REST file download (save-as)

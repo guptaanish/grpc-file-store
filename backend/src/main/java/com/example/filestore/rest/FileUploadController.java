@@ -10,6 +10,10 @@ import java.util.Map;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -45,6 +49,7 @@ import com.example.filestore.service.StorageService;
 @RestController
 @RequestMapping("/api/v1/files/upload")
 @RequiredArgsConstructor
+@Tag(name = "File Upload", description = "Multipart and resumable file upload endpoints used by the browser UI.")
 public class FileUploadController {
 
     /**
@@ -107,6 +112,15 @@ public class FileUploadController {
      * @return the upload response with file ID, checksum, version, and size.
      */
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(
+            summary = "Upload a file",
+            description = "Streams a multipart file to storage with SHA-256 checksumming and "
+                    + "content-addressable deduplication. Mirrors the gRPC UploadFile RPC.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "201", description = "File stored; returns id, checksum, version, size."),
+        @ApiResponse(responseCode = "400", description = "Empty file, blank filename, or size over the limit."),
+        @ApiResponse(responseCode = "429", description = "Storage quota exceeded.")
+    })
     public ResponseEntity<UploadResponse> uploadFile(@RequestParam("file") MultipartFile file) {
         log.info("REST upload received: filename={}, size={}, contentType={}",
                 file.getOriginalFilename(), file.getSize(), file.getContentType());
@@ -176,6 +190,13 @@ public class FileUploadController {
      * @return a map containing the session ID.
      */
     @PostMapping("/initiate")
+    @Operation(
+            summary = "Initiate a resumable upload",
+            description = "Creates a resumable upload session and returns its session ID.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "201", description = "Session created."),
+        @ApiResponse(responseCode = "400", description = "Missing filename or non-positive totalSize.")
+    })
     public ResponseEntity<Map<String, Object>> initiateResumableUpload(
             @RequestParam("filename") String filename,
             @RequestParam("contentType") String contentType,
@@ -212,6 +233,15 @@ public class FileUploadController {
      * @return the current upload status, or the final upload response if complete.
      */
     @PostMapping("/{sessionId}/resume")
+    @Operation(
+            summary = "Resume an upload",
+            description = "Appends a chunk at the given offset. When all bytes are received the "
+                    + "upload is finalized and the file response is returned.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Chunk accepted; upload still in progress."),
+        @ApiResponse(responseCode = "201", description = "Final chunk received; file stored."),
+        @ApiResponse(responseCode = "400", description = "Unknown session or offset mismatch.")
+    })
     public ResponseEntity<?> resumeUpload(
             @PathVariable("sessionId") String sessionId,
             @RequestParam("chunk") MultipartFile chunk,
